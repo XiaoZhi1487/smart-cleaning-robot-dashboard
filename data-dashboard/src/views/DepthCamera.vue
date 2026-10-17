@@ -72,12 +72,6 @@
                 <div class="stat-label">{{ $t('camera.format') }}</div>
                 <div class="stat-value">MJPEG</div>
               </div>
-              <div class="stat-item">
-                <div class="stat-label">{{ $t('camera.connState') }}</div>
-                <div class="stat-value" :class="{ warning: !cameraConnected }">
-                  {{ cameraConnected ? $t('camera.connected') : $t('camera.disconnected') }}
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -95,10 +89,6 @@
               {{ cameraConnected ? $t('camera.liveFps') : $t('camera.noFrame') }}
             </div>
             <div class="live-rows">
-              <div class="live-row">
-                <span class="live-label">{{ $t('camera.resolution') }}</span>
-                <span class="live-value">{{ resolution }}</span>
-              </div>
               <div class="live-row">
                 <span class="live-label">{{ $t('camera.videoAddr') }}</span>
                 <span class="live-value">{{ videoSourceAddr }}</span>
