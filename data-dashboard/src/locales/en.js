@@ -101,7 +101,14 @@ export default {
     loadSuccess: 'Industrial camera stream connected',
     loadRetry: 'Industrial camera loading retry ({count}/{max})...',
     loadFail: 'Industrial camera stream failed',
-    connFail: 'Connection failed: {error}'
+    connFail: 'Connection failed: {error}',
+    liveStatus: 'Camera Live Status',
+    liveFps: 'Image frame rate (real)',
+    noFrame: 'No image data',
+    depthFilter: 'Depth Filter',
+    deviceStatus: 'Device Status',
+    rosConnected: 'ROS Connected',
+    rosClosed: 'ROS Connection Closed'
   },
   screen: {
     pageTitle: 'Curtain Wall Cleaning Robot - Real-time Monitoring Dashboard',
@@ -161,6 +168,26 @@ export default {
     logPathAdjust: 'Adjusting cleaning path',
     logTiltAdjust: 'Slight tilt detected, auto-adjusting',
     logBrushSpeed: 'Brush speed adjusted to {speed} RPM',
-    logSelfCheck: 'Self-check completed, status normal'
+    logSelfCheck: 'Self-check completed, status normal',
+    rosComm: 'ROS Communication',
+    stm32: 'STM32 Control',
+    clients: 'Online Clients',
+    ultrasonicLeft: 'Left Ultrasonic',
+    ultrasonicFront: 'Front Ultrasonic',
+    ultrasonicRight: 'Right Ultrasonic',
+    currentCmd: 'Current Command',
+    moving: 'Motion Status',
+    online: 'Online',
+    offline: 'Offline',
+    noData: 'No Data',
+    liveStream: 'Live Data Stream',
+    ultrasonicTrend: 'Real-time Ultrasonic Distance Trend',
+    logRosConnected: 'ROS connected',
+    logRosClosed: 'ROS disconnected',
+    logStm32On: 'STM32 module online',
+    logStm32Off: 'STM32 module offline',
+    logMove: 'Send command: {cmd}',
+    logResultOk: 'Command executed successfully',
+    logResultErr: 'Command execution failed'
   }
 }

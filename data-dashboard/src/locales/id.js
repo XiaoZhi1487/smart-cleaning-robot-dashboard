@@ -101,7 +101,14 @@ export default {
     loadSuccess: 'Aliran video kamera industri terhubung',
     loadRetry: 'Percobaan ulang kamera industri ({count}/{max})...',
     loadFail: 'Aliran video kamera industri gagal',
-    connFail: 'Koneksi gagal: {error}'
+    connFail: 'Koneksi gagal: {error}',
+    liveStatus: 'Status Kamera Real-time',
+    liveFps: 'Kecepatan bingkai gambar (asli)',
+    noFrame: 'Belum ada data gambar',
+    depthFilter: 'Filter Kedalaman',
+    deviceStatus: 'Status Perangkat',
+    rosConnected: 'ROS Terhubung',
+    rosClosed: 'Koneksi ROS ditutup'
   },
   screen: {
     pageTitle: 'Robot Pembersih Dinding Tinggi - Dasbor Pemantauan Real-time',
@@ -161,6 +168,26 @@ export default {
     logPathAdjust: 'Menyesuaikan jalur pembersihan',
     logTiltAdjust: 'Kemiringan kecil terdeteksi, menyesuaikan otomatis',
     logBrushSpeed: 'Kecepatan sikat disesuaikan ke {speed} RPM',
-    logSelfCheck: 'Pemeriksaan mandiri perangkat selesai, status normal'
+    logSelfCheck: 'Pemeriksaan mandiri perangkat selesai, status normal',
+    rosComm: 'Komunikasi ROS',
+    stm32: 'Kontrol STM32',
+    clients: 'Terminal online',
+    ultrasonicLeft: 'Ultrasonik Kiri',
+    ultrasonicFront: 'Ultrasonik Depan',
+    ultrasonicRight: 'Ultrasonik Kanan',
+    currentCmd: 'Perintah saat ini',
+    moving: 'Status gerakan',
+    online: 'Online',
+    offline: 'Offline',
+    noData: 'Tidak ada data',
+    liveStream: 'Aliran data real-time',
+    ultrasonicTrend: 'Tren jarak ultrasonik real-time',
+    logRosConnected: 'ROS terhubung',
+    logRosClosed: 'ROS terputus',
+    logStm32On: 'Modul STM32 online',
+    logStm32Off: 'Modul STM32 offline',
+    logMove: 'Kirim perintah: {cmd}',
+    logResultOk: 'Perintah berhasil dieksekusi',
+    logResultErr: 'Eksekusi perintah gagal'
   }
 }

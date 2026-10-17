@@ -101,7 +101,14 @@ export default {
     loadSuccess: 'Kết nối luồng video camera công nghiệp thành công',
     loadRetry: 'Thử lại camera công nghiệp ({count}/{max})...',
     loadFail: 'Kết nối luồng video camera công nghiệp thất bại',
-    connFail: 'Kết nối thất bại: {error}'
+    connFail: 'Kết nối thất bại: {error}',
+    liveStatus: 'Trạng Thái Camera Thời Gian Thực',
+    liveFps: 'Tốc độ khung hình (thực)',
+    noFrame: 'Chưa có dữ liệu hình ảnh',
+    depthFilter: 'Lọc độ sâu',
+    deviceStatus: 'Trạng thái thiết bị',
+    rosConnected: 'Đã kết nối ROS',
+    rosClosed: 'Đã ngắt kết nối ROS'
   },
   screen: {
     pageTitle: 'Robot Làm Sạch Tường Cao - Bảng Giám Sát Thời Gian Thực',
@@ -161,6 +168,26 @@ export default {
     logPathAdjust: 'Điều chỉnh đường đi làm sạch',
     logTiltAdjust: 'Phát hiện hơi nghiêng, tự điều chỉnh',
     logBrushSpeed: 'Tốc độ chổi điều chỉnh về {speed} RPM',
-    logSelfCheck: 'Tự kiểm tra thiết bị xong, trạng thái bình thường'
+    logSelfCheck: 'Tự kiểm tra thiết bị xong, trạng thái bình thường',
+    rosComm: 'Liên lạc ROS',
+    stm32: 'Điều khiển STM32',
+    clients: 'Thiết bị đầu cuối trực tuyến',
+    ultrasonicLeft: 'Siêu âm trái',
+    ultrasonicFront: 'Siêu âm trước',
+    ultrasonicRight: 'Siêu âm phải',
+    currentCmd: 'Lệnh hiện tại',
+    moving: 'Trạng thái chuyển động',
+    online: 'Trực tuyến',
+    offline: 'Ngoại tuyến',
+    noData: 'Không có dữ liệu',
+    liveStream: 'Luồng dữ liệu thời gian thực',
+    ultrasonicTrend: 'Xu hướng khoảng cách siêu âm thời gian thực',
+    logRosConnected: 'Kết nối ROS thành công',
+    logRosClosed: 'Ngắt kết nối ROS',
+    logStm32On: 'Mô-đun STM32 trực tuyến',
+    logStm32Off: 'Mô-đun STM32 ngoại tuyến',
+    logMove: 'Gửi lệnh: {cmd}',
+    logResultOk: 'Thực hiện lệnh thành công',
+    logResultErr: 'Thực hiện lệnh thất bại'
   }
 }

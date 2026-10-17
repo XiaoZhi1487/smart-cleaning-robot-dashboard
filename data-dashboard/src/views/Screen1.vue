@@ -13,45 +13,10 @@
           </div>
           <div class="card-body">
             <div class="state-list">
-              <div class="state-item-row">
-                <span class="state-icon">🔵</span>
-                <span class="state-name">{{ $t('screen.vacuum') }}</span>
-                <span class="state-value normal">8/8{{ $t('screen.normal') }}</span>
-              </div>
-              <div class="state-item-row">
-                <span class="state-icon">🔵</span>
-                <span class="state-name">{{ $t('screen.servo') }}</span>
-                <span class="state-value normal">4/4{{ $t('screen.running') }}</span>
-              </div>
-              <div class="state-item-row">
-                <span class="state-icon">🔵</span>
-                <span class="state-name">{{ $t('screen.cleaning') }}</span>
-                <span class="state-value normal">{{ $t('screen.normal') }}</span>
-              </div>
-              <div class="state-item-row">
-                <span class="state-icon">🔵</span>
-                <span class="state-name">{{ $t('screen.antiFall') }}</span>
-                <span class="state-value normal">{{ $t('screen.normal') }}</span>
-              </div>
-              <div class="state-item-row">
-                <span class="state-icon">🔵</span>
-                <span class="state-name">{{ $t('screen.fillLight') }}</span>
-                <span class="state-value normal">{{ $t('screen.on') }}</span>
-              </div>
-              <div class="state-item-row">
-                <span class="state-icon">🔵</span>
-                <span class="state-name">{{ $t('screen.edgeDetect') }}</span>
-                <span class="state-value normal">{{ $t('screen.noWarning') }}</span>
-              </div>
-              <div class="state-item-row">
-                <span class="state-icon">🔵</span>
-                <span class="state-name">{{ $t('screen.spray') }}</span>
-                <span class="state-value normal">0.4MPa</span>
-              </div>
-              <div class="state-item-row">
-                <span class="state-icon">🔵</span>
-                <span class="state-name">{{ $t('screen.posture') }}</span>
-                <span class="state-value normal">{{ $t('screen.tilt') }}2°</span>
+              <div v-for="item in deviceItems" :key="item.key" class="state-item-row">
+                <span class="state-icon">{{ item.icon }}</span>
+                <span class="state-name">{{ item.name }}</span>
+                <span class="state-value" :class="item.stateClass">{{ item.value }}</span>
               </div>
             </div>
           </div>
@@ -200,12 +165,12 @@
               <div class="state-badge">
                 <span class="badge-icon">📡</span>
                 <span class="badge-label">{{ $t('screen.comm') }}</span>
-                <span class="badge-value" :class="getStateClass(realTimeData.connect)">{{ realTimeData.connect === '正常' ? $t('screen.normal') : realTimeData.connect }}</span>
+                <span class="badge-value" :class="commStateClass">{{ commStateText }}</span>
               </div>
               <div class="state-badge">
                 <span class="badge-icon">⚠️</span>
                 <span class="badge-label">{{ $t('screen.fault') }}</span>
-                <span class="badge-value" :class="realTimeData.fault === '无' ? 'normal' : 'error'">{{ realTimeData.fault === '无' ? $t('screen.noFault') : realTimeData.fault }}</span>
+                <span class="badge-value" :class="faultStateClass">{{ faultStateText }}</span>
               </div>
             </div>
           </div>
@@ -214,10 +179,10 @@
 
       <!-- 右侧区域：今日统计和故障预警 -->
       <div class="right-section">
-        <!-- 今日作业统计 -->
+        <!-- 实时超声波距离趋势 -->
         <div class="card">
           <div class="card-header">
-            <span class="card-title">{{ $t('screen.todayStats') }}</span>
+            <span class="card-title">{{ $t('screen.ultrasonicTrend') }}</span>
           </div>
           <div class="card-body">
             <div ref="todayChart" class="chart-container"></div>
@@ -314,48 +279,13 @@
             </div>
             <!-- 今日统计 -->
             <div class="daily-stats">
-              <div class="log-section-title">{{ $t('screen.todayStats') }}</div>
+              <div class="log-section-title">{{ $t('screen.liveStream') }}</div>
               <div class="stats-grid">
-                <div class="stat-box">
-                  <div class="stat-icon">⏱️</div>
+                <div v-for="s in liveStats" :key="s.key" class="stat-box" :class="{ highlight: s.highlight }">
+                  <div class="stat-icon">{{ s.icon }}</div>
                   <div class="stat-info">
-                    <div class="stat-label">{{ $t('screen.runTime') }}</div>
-                    <div class="stat-value">{{ dailyStats.runTime }}<span class="unit">h</span></div>
-                  </div>
-                </div>
-                <div class="stat-box">
-                  <div class="stat-icon">📏</div>
-                  <div class="stat-info">
-                    <div class="stat-label">{{ $t('screen.cleanArea') }}</div>
-                    <div class="stat-value">{{ dailyStats.cleanArea }}<span class="unit">㎡</span></div>
-                  </div>
-                </div>
-                <div class="stat-box">
-                  <div class="stat-icon">🔄</div>
-                  <div class="stat-info">
-                    <div class="stat-label">{{ $t('screen.cycles') }}</div>
-                    <div class="stat-value">{{ dailyStats.cycles }}<span class="unit">{{ $t('screen.unitTimes') }}</span></div>
-                  </div>
-                </div>
-                <div class="stat-box">
-                  <div class="stat-icon">💧</div>
-                  <div class="stat-info">
-                    <div class="stat-label">{{ $t('screen.waterUsed') }}</div>
-                    <div class="stat-value">{{ dailyStats.waterUsed }}<span class="unit">L</span></div>
-                  </div>
-                </div>
-                <div class="stat-box">
-                  <div class="stat-icon">⚡</div>
-                  <div class="stat-info">
-                    <div class="stat-label">{{ $t('screen.powerUsed') }}</div>
-                    <div class="stat-value">{{ dailyStats.powerUsed }}<span class="unit">kWh</span></div>
-                  </div>
-                </div>
-                <div class="stat-box highlight">
-                  <div class="stat-icon">✅</div>
-                  <div class="stat-info">
-                    <div class="stat-label">{{ $t('screen.completion') }}</div>
-                    <div class="stat-value">{{ dailyStats.completion }}<span class="unit">%</span></div>
+                    <div class="stat-label">{{ s.label }}</div>
+                    <div class="stat-value">{{ s.value }}<span class="unit">{{ s.unit }}</span></div>
                   </div>
                 </div>
               </div>
@@ -369,344 +299,279 @@
 
 <script setup>
 /* eslint-disable vue/multi-word-component-names */
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import * as echarts from 'echarts/core';
-import { BarChart, LineChart } from 'echarts/charts';
+import { LineChart } from 'echarts/charts';
 import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
-import { LegacyGridContainLabel } from 'echarts/features';
-import { getStateClass } from '@/utils';
+import ROSLIB from 'roslib';
+import { rosState, updateRosState } from '@/store/rosState';
 import { useI18n } from 'vue-i18n';
 
 defineOptions({ name: 'DataScreen' }) // eslint-disable-line no-undef
 
-echarts.use([BarChart, LineChart, GridComponent, TooltipComponent, LegendComponent, CanvasRenderer, LegacyGridContainLabel]);
-
-// 本地模拟数据
-const mockData = {
-  realTime: {
-    code: 200,
-    data: {
-      connect: "正常",
-      fault: "无",
-      cleanArea: 128.6,
-      vacuum: -75.2,
-      coverRate: 92.5,
-      brushSpeed: 300
-    }
-  },
-  todayStat: {
-    code: 200,
-    data: {
-      labels: ['08:00', '10:00', '12:00', '14:00', '16:00'],
-      area: [25, 45, 38, 52, 48],
-      time: [1.2, 2.1, 1.8, 2.5, 2.2]
-    }
-  },
-  faultList: {
-    code: 200,
-    data: []
-  }
-};
-
-// 模拟 API 请求
-const requestMock = (key) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(mockData[key] || { code: 200, data: {} });
-    }, 100);
-  });
-};
+echarts.use([LineChart, GridComponent, TooltipComponent, LegendComponent, CanvasRenderer]);
 
 const { t, locale } = useI18n();
 const todayChart = ref(null);
 const realtimeLogList = ref(null);
 
-let todayChartInstance = null;
-let refreshTimer = null;
-let logTimer = null;
+// ===== ROS 连接 =====
+const ros = ref(null);
+const isConnected = ref(false);
+let waveListener = null;
+let stm32StatusListener = null;
+let stm32ResultListener = null;
+let clientCountListener = null;
+let stm32CmdTopic = null;
 
-const realTimeData = ref({
-      connect: "正常",
-      fault: "无",
-      cleanArea: 128.6,
-      vacuum: -75.2,
-      coverRate: 92.5,
-      brushSpeed: 300
-    });
+// ===== 真实数据状态 =====
+// 超声波距离 [左, 前, 右]（来自 /wave_length，单位 mm）
+const sensors = ref([0, 0, 0]);
+// STM32 在线状态（来自 /stm32_status）
+const stm32Online = ref(false);
+// 在线终端数（来自 /client_count）
+const clientCount = ref(0);
+// 是否已收到过数据
+const hasData = computed(() => isConnected.value && sensors.value.some(v => v > 0));
 
-    const faultList = ref([]);
+// ===== 设备状态总览（真实数据）=====
+const deviceItems = computed(() => [
+  { key: 'ros', icon: '🔌', name: t('screen.rosComm'), value: isConnected.value ? t('screen.online') : t('screen.offline'), stateClass: isConnected.value ? 'normal' : 'error' },
+  { key: 'stm32', icon: '🎛️', name: t('screen.stm32'), value: stm32Online.value ? t('screen.online') : t('screen.offline'), stateClass: stm32Online.value ? 'normal' : (isConnected.value ? 'warning' : 'error') },
+  { key: 'front', icon: '📡', name: t('screen.ultrasonicFront'), value: sensors.value[1] > 0 ? `${sensors.value[1]}mm` : t('screen.noData'), stateClass: sensors.value[1] > 0 && sensors.value[1] < 200 ? 'warning' : 'normal' },
+  { key: 'left', icon: '📡', name: t('screen.ultrasonicLeft'), value: sensors.value[0] > 0 ? `${sensors.value[0]}mm` : t('screen.noData'), stateClass: sensors.value[0] > 0 && sensors.value[0] < 200 ? 'warning' : 'normal' },
+  { key: 'right', icon: '📡', name: t('screen.ultrasonicRight'), value: sensors.value[2] > 0 ? `${sensors.value[2]}mm` : t('screen.noData'), stateClass: sensors.value[2] > 0 && sensors.value[2] < 200 ? 'warning' : 'normal' },
+  { key: 'clients', icon: '🖥️', name: t('screen.clients'), value: clientCount.value > 0 ? `${clientCount.value}` : t('screen.noData'), stateClass: 'normal' }
+]);
 
-    const buildInitialLogs = () => [
-      { time: '14:32:15', type: 'info', typeText: 'INFO', content: t('screen.logStart', { area: 'A3' }) },
-      { time: '14:31:08', type: 'success', typeText: 'OK', content: t('screen.logDone', { area: 'A2', size: '45.2' }) },
-      { time: '14:28:42', type: 'info', typeText: 'INFO', content: t('screen.logSprayStart', { pressure: '0.4' }) },
-      { time: '14:25:18', type: 'warning', typeText: 'WARN', content: t('screen.logTiltAdjust') },
-      { time: '14:22:05', type: 'info', typeText: 'INFO', content: t('screen.logBrushSpeed', { speed: '300' }) },
-      { time: '14:18:33', type: 'success', typeText: 'OK', content: t('screen.logDone', { area: 'A1', size: '38.6' }) },
-      { time: '14:15:20', type: 'info', typeText: 'INFO', content: t('screen.logStart', { area: 'A1' }) },
-      { time: '14:12:00', type: 'info', typeText: 'INFO', content: t('screen.logSelfCheck') }
-    ];
+// ===== 通信 / 故障 徽标 =====
+const commStateClass = computed(() => isConnected.value ? 'normal' : 'error');
+const commStateText = computed(() => isConnected.value ? t('screen.online') : t('screen.offline'));
+const faultStateClass = computed(() => !isConnected.value ? 'error' : (stm32Online.value ? 'normal' : 'warning'));
+const faultStateText = computed(() => !isConnected.value ? t('screen.offline') : (stm32Online.value ? t('screen.noFault') : t('screen.offline')));
 
-    const realtimeLogs = ref(buildInitialLogs());
+// ===== 实时数据流统计（底部 6 格）=====
+const liveStats = computed(() => [
+  { key: 'front', icon: '📡', label: t('screen.ultrasonicFront'), value: sensors.value[1] > 0 ? `${sensors.value[1]}` : '--', unit: 'mm' },
+  { key: 'left', icon: '📡', label: t('screen.ultrasonicLeft'), value: sensors.value[0] > 0 ? `${sensors.value[0]}` : '--', unit: 'mm' },
+  { key: 'right', icon: '📡', label: t('screen.ultrasonicRight'), value: sensors.value[2] > 0 ? `${sensors.value[2]}` : '--', unit: 'mm' },
+  { key: 'stm32', icon: '🎛️', label: t('screen.stm32'), value: stm32Online.value ? t('screen.online') : t('screen.offline'), unit: '', stateClass: stm32Online.value ? 'normal' : 'warning' },
+  { key: 'clients', icon: '🖥️', label: t('screen.clients'), value: clientCount.value > 0 ? `${clientCount.value}` : '--', unit: '', stateClass: 'normal' },
+  { key: 'ros', icon: '🔌', label: t('screen.rosComm'), value: isConnected.value ? t('screen.online') : t('screen.offline'), unit: '', highlight: true }
+]);
 
-    const dailyStats = ref({
-      runTime: '6.5',
-      cleanArea: '128.6',
-      cycles: '12',
-      waterUsed: '45.8',
-      powerUsed: '3.2',
-      completion: '92.5'
-    });
+// ===== 设备工作日志（真实事件）=====
+const realtimeLogs = ref([]);
 
-    // 机器人控制状态
-    const robotControlStatus = ref('idle');
-    const robotControlStatusText = ref(t('screen.standby'));
+const addLog = (type, typeText, content) => {
+  const now = new Date();
+  realtimeLogs.value.unshift({ time: now.toTimeString().slice(0, 8), type, typeText, content });
+  if (realtimeLogs.value.length > 20) realtimeLogs.value.pop();
+  if (realtimeLogList.value) realtimeLogList.value.scrollTop = 0;
+};
 
-    // 机器人控制方法 - 点击执行，不点击立即停止
-    const moveRobot = (direction) => {
-      switch(direction) {
-        case 'forward':
-          robotControlStatus.value = 'moving';
-          robotControlStatusText.value = t('screen.movingForward');
-          break;
-        case 'backward':
-          robotControlStatus.value = 'moving';
-          robotControlStatusText.value = t('screen.movingBackward');
-          break;
-        case 'left':
-          robotControlStatus.value = 'turning';
-          robotControlStatusText.value = t('screen.turningLeft');
-          break;
-        case 'right':
-          robotControlStatus.value = 'turning';
-          robotControlStatusText.value = t('screen.turningRight');
-          break;
-        case 'stop':
-          robotControlStatus.value = 'idle';
-          robotControlStatusText.value = t('screen.stopped');
-          break;
-      }
-    };
+// ===== 机器人控制（发布 /stm32_cmd，订阅 /stm32_result 反馈）=====
+const robotControlStatus = ref('idle');
+const robotControlStatusText = ref(t('screen.standby'));
+const CMD_MAP = { forward: 3, backward: 2, left: 4, right: 5, stop: 1 };
 
-    // 停止机器人
-    const stopRobot = () => {
-      robotControlStatus.value = 'idle';
-      robotControlStatusText.value = t('screen.standby');
-    };
+const moveRobot = (direction) => {
+  if (!isConnected.value || !stm32CmdTopic) {
+    robotControlStatus.value = 'idle';
+    robotControlStatusText.value = t('screen.offline');
+    return;
+  }
+  stm32CmdTopic.publish(new ROSLIB.Message({ data: CMD_MAP[direction] }));
+  if (direction === 'stop') {
+    robotControlStatus.value = 'idle';
+    robotControlStatusText.value = t('screen.stopped');
+  } else if (direction === 'left' || direction === 'right') {
+    robotControlStatus.value = 'turning';
+    robotControlStatusText.value = t(`screen.turning${direction.charAt(0).toUpperCase() + direction.slice(1)}`);
+  } else {
+    robotControlStatus.value = 'moving';
+    robotControlStatusText.value = t(`screen.moving${direction.charAt(0).toUpperCase() + direction.slice(1)}`);
+  }
+  addLog('info', 'CMD', t('screen.logMove', { cmd: t(`screen.${direction === 'left' ? 'turnLeft' : direction === 'right' ? 'turnRight' : direction}`) }));
+};
 
-    // 键盘按下 - 开始移动
-    const handleKeyDown = (event) => {
-      // 防止重复触发
-      if (event.repeat) return;
-      
-      switch(event.key) {
-        case 'ArrowUp':
-        case 'w':
-        case 'W':
-          event.preventDefault();
-          moveRobot('forward');
-          break;
-        case 'ArrowDown':
-        case 's':
-        case 'S':
-          event.preventDefault();
-          moveRobot('backward');
-          break;
-        case 'ArrowLeft':
-        case 'a':
-        case 'A':
-          event.preventDefault();
-          moveRobot('left');
-          break;
-        case 'ArrowRight':
-        case 'd':
-        case 'D':
-          event.preventDefault();
-          moveRobot('right');
-          break;
-        case ' ':
-        case 'Space':
-          event.preventDefault();
-          moveRobot('stop');
-          break;
-      }
-    };
+const stopRobot = () => {
+  if (isConnected.value) moveRobot('stop');
+};
 
-    // 键盘释放 - 立即停止
-    const handleKeyUp = (event) => {
-      // 释放方向键或WASD时停止
-      const key = event.key;
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'W', 'a', 'A', 's', 'S', 'd', 'D'].includes(key)) {
-        stopRobot();
-      }
-    };
+const handleKeyDown = (event) => {
+  if (event.repeat) return;
+  const map = { ArrowUp: 'forward', w: 'forward', W: 'forward', ArrowDown: 'backward', s: 'backward', S: 'backward', ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right' };
+  if (map[event.key]) {
+    event.preventDefault();
+    moveRobot(map[event.key]);
+  } else if (event.key === ' ' || event.key === 'Space') {
+    event.preventDefault();
+    moveRobot('stop');
+  }
+};
 
-    const logTypes = [
-      { type: 'info', typeText: 'INFO', key: 'logCleaning' },
-      { type: 'success', typeText: 'OK', key: 'logCleanDone' },
-      { type: 'warning', typeText: 'WARN', key: 'logEdgeWarning' },
-      { type: 'info', typeText: 'INFO', key: 'logSpraying' },
-      { type: 'success', typeText: 'OK', key: 'logSuctionOk' },
-      { type: 'info', typeText: 'INFO', key: 'logPathAdjust' }
-    ];
+const handleKeyUp = (event) => {
+  const moveKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'W', 'a', 'A', 's', 'S', 'd', 'D'];
+  if (moveKeys.includes(event.key)) stopRobot();
+};
 
-    const addNewLog = () => {
-      const now = new Date();
-      const timeStr = now.toTimeString().slice(0, 8);
-      const randomLog = logTypes[Math.floor(Math.random() * logTypes.length)];
-      const areas = ['A1', 'A2', 'A3', 'A4', 'B1', 'B2', 'B3'];
-      const area = areas[Math.floor(Math.random() * areas.length)];
-      
-      let content = t(`screen.${randomLog.key}`);
-      if (randomLog.key === 'logCleanDone') {
-        content = t('screen.logDone', { area, size: (Math.random() * 20 + 30).toFixed(1) });
-      } else if (randomLog.key === 'logCleaning') {
-        content = t('screen.logStart', { area });
-      }
-      
-      const newLog = {
-        time: timeStr,
-        type: randomLog.type,
-        typeText: randomLog.typeText,
-        content: content
-      };
-      
-      realtimeLogs.value.unshift(newLog);
-      if (realtimeLogs.value.length > 20) {
-        realtimeLogs.value.pop();
-      }
-      
-      if (realtimeLogList.value) {
-        realtimeLogList.value.scrollTop = 0;
-      }
-    };
+// ===== 超声波实时趋势图（真实数据）=====
+const chartLabels = ref([]);
+const chartData = ref([[], [], []]); // [左, 前, 右]
+const MAX_POINTS = 20;
 
-    const initTodayChart = (data) => {
-      if (!todayChart.value) return;
-      if (!todayChartInstance) {
-        todayChartInstance = echarts.init(todayChart.value);
-      }
-      const option = {
-        color: ['#00E5FF', '#00FF96'],
-        tooltip: { 
-          trigger: 'axis',
-          backgroundColor: 'rgba(10, 16, 31, 0.9)',
-          borderColor: 'rgba(0, 229, 255, 0.3)',
-          textStyle: { color: '#e6f7ff' }
-        },
-        legend: { 
-          data: [t('screen.area'), t('screen.workTime')],
-          textStyle: { color: '#8b9bb4', fontSize: 11 },
-          top: 5
-        },
-        grid: { left: '5%', right: '5%', bottom: '5%', top: '20%', containLabel: true },
-        xAxis: { 
-          type: 'category', 
-          data: data.labels, 
-          axisLabel: { color: '#8b9bb4', fontSize: 11 },
-          axisLine: { lineStyle: { color: 'rgba(0, 229, 255, 0.2)' } }
-        },
-        yAxis: [
-          { 
-            type: 'value', 
-            name: t('screen.areaUnit'), 
-            axisLabel: { color: '#8b9bb4', fontSize: 12 },
-            nameTextStyle: { color: '#8b9bb4', fontSize: 12 },
-            axisLine: { lineStyle: { color: 'rgba(0, 229, 255, 0.2)' } },
-            splitLine: { lineStyle: { color: 'rgba(0, 229, 255, 0.1)' } }
-          },
-          { 
-            type: 'value', 
-            name: t('screen.timeUnit'), 
-            axisLabel: { color: '#8b9bb4', fontSize: 12 },
-            nameTextStyle: { color: '#8b9bb4', fontSize: 12 },
-            position: 'right',
-            axisLine: { lineStyle: { color: 'rgba(0, 229, 255, 0.2)' } },
-            splitLine: { show: false }
-          }
-        ],
-        series: [
-          {
-            name: t('screen.area'),
-            type: 'bar',
-            yAxisIndex: 0,
-            data: data.area,
-            barWidth: '30%',
-            itemStyle: { color: '#00E5FF' },
-            label: { show: true, position: 'top', color: '#e6f7ff', fontSize: 12 }
-          },
-          {
-            name: t('screen.workTime'),
-            type: 'line',
-            yAxisIndex: 1,
-            data: data.time,
-            smooth: true,
-            lineStyle: { width: 2 },
-            itemStyle: { color: '#00FF96' }
-          }
-        ]
-      };
-      todayChartInstance.setOption(option, { notMerge: true });
-    };
+const initChart = () => {
+  if (!todayChart.value) return;
+  const chart = echarts.init(todayChart.value);
+  chart.setOption({
+    color: ['#00E5FF', '#FFCC00', '#00FF96'],
+    tooltip: { trigger: 'axis', backgroundColor: 'rgba(10,16,31,0.9)', borderColor: 'rgba(0,229,255,0.3)', textStyle: { color: '#e6f7ff' } },
+    legend: { data: [t('radar.left'), t('radar.front'), t('radar.right')], textStyle: { color: '#8b9bb4', fontSize: 11 }, top: 5 },
+    grid: { left: '5%', right: '5%', bottom: '5%', top: '20%', containLabel: true },
+    xAxis: { type: 'category', data: chartLabels.value, axisLabel: { color: '#8b9bb4', fontSize: 10 }, axisLine: { lineStyle: { color: 'rgba(0,229,255,0.2)' } } },
+    yAxis: { type: 'value', name: 'mm', nameTextStyle: { color: '#8b9bb4' }, axisLabel: { color: '#8b9bb4' }, axisLine: { lineStyle: { color: 'rgba(0,229,255,0.2)' } }, splitLine: { lineStyle: { color: 'rgba(0,229,255,0.1)' } } },
+    series: [
+      { name: t('radar.left'), type: 'line', data: chartData.value[0], smooth: true, lineStyle: { width: 2 } },
+      { name: t('radar.front'), type: 'line', data: chartData.value[1], smooth: true, lineStyle: { width: 2 } },
+      { name: t('radar.right'), type: 'line', data: chartData.value[2], smooth: true, lineStyle: { width: 2 } }
+    ]
+  });
+  return chart;
+};
 
-    const loadData = async () => {
-      try {
-        const realTimeRes = await requestMock('realTime');
-        const todayStatRes = await requestMock('todayStat');
-        const faultListRes = await requestMock('faultList');
+let chartInstance = null;
+const pushChartPoint = () => {
+  if (hasData.value) {
+    chartLabels.value.push(new Date().toTimeString().slice(0, 8));
+    for (let i = 0; i < 3; i++) chartData.value[i].push(sensors.value[i]);
+    if (chartLabels.value.length > MAX_POINTS) {
+      chartLabels.value.shift();
+      chartData.value.forEach(arr => arr.shift());
+    }
+  }
+  if (chartInstance) chartInstance.setOption({
+    xAxis: { data: chartLabels.value },
+    series: chartData.value.map(d => ({ data: d }))
+  });
+};
 
-        if (realTimeRes.code === 200) {
-          realTimeData.value = realTimeRes.data;
-        }
-        if (faultListRes.code === 200) {
-          faultList.value = faultListRes.data || [];
-        }
+const handleResize = () => chartInstance?.resize();
 
-        if (todayStatRes.code === 200) {
-          initTodayChart(todayStatRes.data);
-        }
-      } catch (error) {
-        console.error('加载数据失败:', error);
-      }
-    };
+// ===== ROS 订阅 =====
+const connectROS = () => {
+  if (isConnected.value) return;
+  const url = rosState.url;
+  ros.value = new ROSLIB.Ros({ url });
 
-    const refreshRealTimeData = async () => {
-      try {
-        const res = await requestMock('realTime');
-        if (res.code === 200) {
-          realTimeData.value = res.data;
-        }
-      } catch (error) {
-        console.error('刷新数据失败:', error);
-      }
-    };
+  ros.value.on('connection', () => {
+    isConnected.value = true;
+    updateRosState(url, true);
+    addLog('success', 'ROS', t('screen.logRosConnected'));
+    subscribeTopics();
+  });
+  ros.value.on('error', (error) => {
+    console.error('ROS Connection Error:', error);
+  });
+  ros.value.on('close', () => {
+    isConnected.value = false;
+    stm32Online.value = false;
+    updateRosState(null, false);
+    addLog('warning', 'ROS', t('screen.logRosClosed'));
+  });
+};
 
-    const handleResize = () => {
-      todayChartInstance?.resize();
-    };
+const subscribeTopics = () => {
+  // 超声波距离
+  waveListener = new ROSLIB.Topic({ ros: ros.value, name: '/wave_length', messageType: 'std_msgs/UInt8MultiArray' });
+  waveListener.subscribe(processWave);
 
-    watch(locale, () => {
-      realtimeLogs.value = buildInitialLogs();
-      if (robotControlStatus.value === 'idle') {
-        robotControlStatusText.value = t('screen.standby');
-      }
-      loadData();
-    });
+  // STM32 在线状态
+  stm32StatusListener = new ROSLIB.Topic({ ros: ros.value, name: '/stm32_status', messageType: 'std_msgs/String' });
+  stm32StatusListener.subscribe((msg) => {
+    const was = stm32Online.value;
+    stm32Online.value = msg.data === 'online';
+    if (stm32Online.value && !was) addLog('success', 'STM32', t('screen.logStm32On'));
+    else if (!stm32Online.value && was) addLog('warning', 'STM32', t('screen.logStm32Off'));
+  });
 
-    onMounted(() => {
-      loadData();
-      refreshTimer = setInterval(refreshRealTimeData, 5000);
-      logTimer = setInterval(addNewLog, 3000);
-      window.addEventListener('resize', handleResize);
-    });
+  // STM32 执行结果
+  stm32ResultListener = new ROSLIB.Topic({ ros: ros.value, name: '/stm32_result', messageType: 'std_msgs/String' });
+  stm32ResultListener.subscribe((msg) => {
+    if (msg.data.startsWith('success')) addLog('success', 'OK', t('screen.logResultOk'));
+    else if (msg.data.startsWith('error')) addLog('error', 'ERR', t('screen.logResultErr'));
+  });
 
-    onUnmounted(() => {
-      if (refreshTimer) clearInterval(refreshTimer);
-      if (logTimer) clearInterval(logTimer);
-      window.removeEventListener('resize', handleResize);
-      todayChartInstance?.dispose();
-    });
+  // 在线终端数
+  clientCountListener = new ROSLIB.Topic({ ros: ros.value, name: '/client_count', messageType: 'std_msgs/Int32' });
+  clientCountListener.subscribe((msg) => { clientCount.value = msg.data; });
+
+  // 发布控制指令
+  stm32CmdTopic = new ROSLIB.Topic({ ros: ros.value, name: '/stm32_cmd', messageType: 'std_msgs/Int32' });
+};
+
+const processWave = (message) => {
+  let data = message.data;
+  if (data && typeof data === 'object' && !Array.isArray(data)) data = data.data || data;
+  if (typeof data === 'string') {
+    try {
+      const binaryString = atob(data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
+      data = Array.from(bytes);
+    } catch (e) { return; }
+  }
+  if (!data || !Array.isArray(data) || data.length < 6) return;
+  // ROS 顺序 [前方, 左边, 右边] → 映射为 [左, 前, 右]
+  const mapping = [1, 0, 2];
+  for (let i = 0; i < 3; i++) {
+    const idx = mapping[i];
+    const high = Number(data[idx * 2]) & 0xFF;
+    const low = Number(data[idx * 2 + 1]) & 0xFF;
+    sensors.value[i] = (high << 8) | low;
+  }
+  // 限频采样入趋势图（约 2 秒一个点）
+  const now = Date.now();
+  if (now - lastSampleAt >= 2000) {
+    lastSampleAt = now;
+    pushChartPoint();
+  }
+};
+
+let lastSampleAt = 0;
+
+const disconnectROS = () => {
+  if (waveListener) { waveListener.unsubscribe(); waveListener = null; }
+  if (stm32StatusListener) { stm32StatusListener.unsubscribe(); stm32StatusListener = null; }
+  if (stm32ResultListener) { stm32ResultListener.unsubscribe(); stm32ResultListener = null; }
+  if (clientCountListener) { clientCountListener.unsubscribe(); clientCountListener = null; }
+  stm32CmdTopic = null;
+  if (ros.value) { ros.value.close(); ros.value = null; }
+  isConnected.value = false;
+  updateRosState(null, false);
+};
+
+watch(locale, () => {
+  robotControlStatusText.value = robotControlStatus.value === 'idle' ? t('screen.standby') : robotControlStatusText.value;
+});
+
+onMounted(() => {
+  chartInstance = initChart();
+  connectROS();
+  window.addEventListener('resize', handleResize);
+  window.addEventListener('keydown', handleKeyDown);
+  window.addEventListener('keyup', handleKeyUp);
+});
+
+onUnmounted(() => {
+  disconnectROS();
+  window.removeEventListener('resize', handleResize);
+  window.removeEventListener('keydown', handleKeyDown);
+  window.removeEventListener('keyup', handleKeyUp);
+  chartInstance?.dispose();
+  chartInstance = null;
+});
 </script>
 
 <style scoped>

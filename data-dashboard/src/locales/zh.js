@@ -101,7 +101,14 @@ export default {
     loadSuccess: '工业相机视频流连接成功',
     loadRetry: '工业相机加载重试 ({count}/{max})...',
     loadFail: '工业相机视频流连接失败',
-    connFail: '连接失败: {error}'
+    connFail: '连接失败: {error}',
+    liveStatus: '相机实时运行状态',
+    liveFps: '图像帧率（真实值）',
+    noFrame: '暂无图像数据',
+    depthFilter: '深度滤波',
+    deviceStatus: '设备状态',
+    rosConnected: 'ROS 连接成功',
+    rosClosed: 'ROS 连接关闭'
   },
   screen: {
     pageTitle: '高空幕墙清洁机器人 - 实时监控大屏',
@@ -161,6 +168,26 @@ export default {
     logPathAdjust: '调整清洁路径',
     logTiltAdjust: '检测到轻微倾斜，自动调整中',
     logBrushSpeed: '毛刷转速调整至 {speed} RPM',
-    logSelfCheck: '设备自检完成，状态正常'
+    logSelfCheck: '设备自检完成，状态正常',
+    rosComm: 'ROS 通信',
+    stm32: 'STM32 控制',
+    clients: '在线终端',
+    ultrasonicLeft: '左超声波',
+    ultrasonicFront: '前超声波',
+    ultrasonicRight: '右超声波',
+    currentCmd: '当前指令',
+    moving: '运动状态',
+    online: '在线',
+    offline: '离线',
+    noData: '无数据',
+    liveStream: '实时数据流',
+    ultrasonicTrend: '实时超声波距离趋势',
+    logRosConnected: 'ROS 连接成功',
+    logRosClosed: 'ROS 连接断开',
+    logStm32On: 'STM32 模块上线',
+    logStm32Off: 'STM32 模块离线',
+    logMove: '发送指令: {cmd}',
+    logResultOk: '指令执行成功',
+    logResultErr: '指令执行失败'
   }
 }

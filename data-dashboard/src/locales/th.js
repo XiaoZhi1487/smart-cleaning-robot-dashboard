@@ -101,7 +101,14 @@ export default {
     loadSuccess: 'เชื่อมต่อสตรีมกล้องอุตสาหกรรมสำเร็จ',
     loadRetry: 'ลองโหลดกล้องอุตสาหกรรมใหม่ ({count}/{max})...',
     loadFail: 'เชื่อมต่อสตรีมกล้องอุตสาหกรรมล้มเหลว',
-    connFail: 'การเชื่อมต่อล้มเหลว: {error}'
+    connFail: 'การเชื่อมต่อล้มเหลว: {error}',
+    liveStatus: 'สถานะกล้องแบบเรียลไทม์',
+    liveFps: 'อัตราเฟรมภาพ (ค่าจริง)',
+    noFrame: 'ยังไม่มีข้อมูลภาพ',
+    depthFilter: 'การกรองความลึก',
+    deviceStatus: 'สถานะอุปกรณ์',
+    rosConnected: 'เชื่อมต่อ ROS สำเร็จ',
+    rosClosed: 'ปิดการเชื่อมต่อ ROS'
   },
   screen: {
     pageTitle: 'หุ่นยนต์ทำความสะอาดผนังม่านอาคารสูง - จอแสดงผลเรียลไทม์',
@@ -161,6 +168,26 @@ export default {
     logPathAdjust: 'ปรับเส้นทางทำความสะอาด',
     logTiltAdjust: 'ตรวจพบการเอียงเล็กน้อย, กำลังปรับอัตโนมัติ',
     logBrushSpeed: 'ปรับความเร็วแปรงเป็น {speed} RPM',
-    logSelfCheck: 'ตรวจสอบตัวเองเสร็จสิ้น, สถานะปกติ'
+    logSelfCheck: 'ตรวจสอบตัวเองเสร็จสิ้น, สถานะปกติ',
+    rosComm: 'การสื่อสาร ROS',
+    stm32: 'ควบคุม STM32',
+    clients: 'เทอร์มินัลออนไลน์',
+    ultrasonicLeft: 'อัลตราโซนิกซ้าย',
+    ultrasonicFront: 'อัลตราโซนิกหน้า',
+    ultrasonicRight: 'อัลตราโซนิกขวา',
+    currentCmd: 'คำสั่งปัจจุบัน',
+    moving: 'สถานะการเคลื่อนที่',
+    online: 'ออนไลน์',
+    offline: 'ออฟไลน์',
+    noData: 'ไม่มีข้อมูล',
+    liveStream: 'สตรีมข้อมูลแบบเรียลไทม์',
+    ultrasonicTrend: 'แนวโน้มระยะอัลตราโซนิกแบบเรียลไทม์',
+    logRosConnected: 'เชื่อมต่อ ROS สำเร็จ',
+    logRosClosed: 'ตัดการเชื่อมต่อ ROS',
+    logStm32On: 'โมดูล STM32 ออนไลน์',
+    logStm32Off: 'โมดูล STM32 ออฟไลน์',
+    logMove: 'ส่งคำสั่ง: {cmd}',
+    logResultOk: 'คำสั่งดำเนินการสำเร็จ',
+    logResultErr: 'การดำเนินการคำสั่งล้มเหลว'
   }
 }
