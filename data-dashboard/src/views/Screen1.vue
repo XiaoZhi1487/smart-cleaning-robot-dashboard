@@ -236,6 +236,9 @@ const realtimeLogList = ref(null);
 let waveListener = null;
 let stm32StatusListener = null;
 let clientCountListener = null;
+let camOnlineListener = null;
+let diagListener = null;
+let uptimeTimer = null;
 
 // ===== 真实数据状态 =====
 // 超声波距离 [左, 前, 右]（来自 /wave_length，单位 mm）
@@ -244,6 +247,12 @@ const sensors = ref([0, 0, 0]);
 const stm32Online = ref(false);
 // 在线终端数（来自 /client_count）
 const clientCount = ref(0);
+// CPU / 相机 RGB 温度（来自 /diagnostics）与相机在线状态（来自 /camera/device_status）
+const cpuTemp = ref(0);
+const rgbTemp = ref(0);
+const camOnline = ref(false);
+// 设备开机时长（秒，来自 YOLO 后端 /uptime）
+const devUptime = ref(0);
 // 是否已收到过数据
 const hasData = computed(() => rosState.connected && sensors.value.some(v => v > 0));
 
@@ -254,6 +263,10 @@ const deviceItems = computed(() => [
   { key: 'front', icon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12 2 12"/><path d="M22 12a10 10 0 0 0-20 0"/><path d="M6 12a6 6 0 0 1 12 0"/><path d="M10 12a2 2 0 0 1 4 0"/></svg>', name: t('screen.ultrasonicFront'), value: sensors.value[1] > 0 ? `${sensors.value[1]}mm` : t('screen.noData'), stateClass: sensors.value[1] > 0 && sensors.value[1] < 200 ? 'warning' : 'normal' },
   { key: 'left', icon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform: rotate(-90deg)"><path d="M22 12 2 12"/><path d="M22 12a10 10 0 0 0-20 0"/><path d="M6 12a6 6 0 0 1 12 0"/><path d="M10 12a2 2 0 0 1 4 0"/></svg>', name: t('screen.ultrasonicLeft'), value: sensors.value[0] > 0 ? `${sensors.value[0]}mm` : t('screen.noData'), stateClass: sensors.value[0] > 0 && sensors.value[0] < 200 ? 'warning' : 'normal' },
   { key: 'right', icon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform: rotate(90deg)"><path d="M22 12 2 12"/><path d="M22 12a10 10 0 0 0-20 0"/><path d="M6 12a6 6 0 0 1 12 0"/><path d="M10 12a2 2 0 0 1 4 0"/></svg>', name: t('screen.ultrasonicRight'), value: sensors.value[2] > 0 ? `${sensors.value[2]}mm` : t('screen.noData'), stateClass: sensors.value[2] > 0 && sensors.value[2] < 200 ? 'warning' : 'normal' },
+  { key: 'camOnline', icon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>', name: t('screen.cameraOnline'), value: camOnline.value ? t('screen.online') : t('screen.offline'), stateClass: camOnline.value ? 'normal' : (rosState.connected ? 'warning' : 'error') },
+  { key: 'cpuTemp', icon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/><path d="M9 14.3a2.5 2.5 0 1 0 6 0"/></svg>', name: t('screen.cpuTemp'), value: cpuTemp.value > 0 ? `${cpuTemp.value}°C` : t('screen.noData'), stateClass: cpuTemp.value >= 85 ? 'warning' : 'normal' },
+  { key: 'rgbTemp', icon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14 14 0 0 0 0 20 14 14 0 0 0 0-20z"/><path d="M2 12h20"/></svg>', name: t('screen.rgbTemp'), value: rgbTemp.value > 0 ? `${rgbTemp.value}°C` : t('screen.noData'), stateClass: rgbTemp.value >= 85 ? 'warning' : 'normal' },
+  { key: 'uptime', icon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>', name: t('screen.deviceUptime'), value: devUptime.value > 0 ? formatUptime(devUptime.value) : t('screen.noData'), stateClass: 'normal' },
   { key: 'clients', icon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M8 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/><path d="m22 15-4-4-4 4"/></svg>', name: t('screen.clients'), value: clientCount.value > 0 ? `${clientCount.value}` : t('screen.noData'), stateClass: 'normal' }
 ]);
 
@@ -331,6 +344,48 @@ const subscribeTopics = () => {
 
   // 在线终端数
   clientCountListener = subscribeTopic('/client_count', 'std_msgs/Int32', (msg) => { clientCount.value = msg.data; });
+
+  // 相机在线状态（来自 /camera/device_status）
+  camOnlineListener = subscribeTopic('/camera/device_status', 'orbbec_camera_msgs/DeviceStatus', (msg) => {
+    camOnline.value = !!msg.device_online;
+  });
+
+  // CPU / 相机 RGB 温度（来自 /diagnostics）
+  diagListener = subscribeTopic('/diagnostics', 'diagnostic_msgs/DiagnosticArray', (msg) => {
+    if (!msg.status || !msg.status.length) return;
+    const values = msg.status[0].values || [];
+    values.forEach((v) => {
+      if (v.key === 'CPU Temperature' && v.value) { cpuTemp.value = Number(v.value) || 0; }
+      if (v.key === 'RGB Temperature' && v.value) { rgbTemp.value = Number(v.value) || 0; }
+    });
+  });
+};
+
+// ===== 设备开机时长（轮询 YOLO 后端 /uptime）=====
+// 从状态栏 CAM 地址提取后端服务主机（如 http://localhost:8083/camera -> http://localhost:8083）
+const getYoloHost = () => {
+  const m = rosState.cameraUrl.match(/^(https?:\/\/[^/]+)/);
+  return m ? m[1] : '';
+};
+
+const formatUptime = (secs) => {
+  const d = Math.floor(secs / 86400);
+  const h = Math.floor((secs % 86400) / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  if (d > 0) return t('screen.uptimeFmt', { d, h, m });
+  if (h > 0) return t('screen.uptimeFmt', { d: 0, h, m });
+  return t('screen.uptimeFmt', { d: 0, h: 0, m: Math.floor(secs / 60) || 1 });
+};
+
+const pollUptime = async () => {
+  const host = getYoloHost();
+  if (!host) return;
+  try {
+    const res = await fetch(`${host}/uptime`);
+    const data = await res.json();
+    const u = Number(data.uptime);
+    devUptime.value = u > 0 ? u : 0;
+  } catch (e) { /* 设备不可达时保持 0(显示 noData) */ }
 };
 
 const processWave = (message) => {
@@ -368,13 +423,19 @@ onMounted(() => {
   connectRos();
   subscribeTopics();
   addLog('success', 'ROS', t('screen.logRosConnected'));
+  // 设备开机时长轮询（约 15 秒一次，后端带缓存）
+  pollUptime();
+  uptimeTimer = setInterval(pollUptime, 15000);
   window.addEventListener('resize', handleResize);
 });
 
 onUnmounted(() => {
+  if (uptimeTimer) { clearInterval(uptimeTimer); uptimeTimer = null; }
   if (waveListener) { waveListener.unsubscribe(); waveListener = null; }
   if (stm32StatusListener) { stm32StatusListener.unsubscribe(); stm32StatusListener = null; }
   if (clientCountListener) { clientCountListener.unsubscribe(); clientCountListener = null; }
+  if (camOnlineListener) { camOnlineListener.unsubscribe(); camOnlineListener = null; }
+  if (diagListener) { diagListener.unsubscribe(); diagListener = null; }
   window.removeEventListener('resize', handleResize);
   chartInstance?.dispose();
   chartInstance = null;

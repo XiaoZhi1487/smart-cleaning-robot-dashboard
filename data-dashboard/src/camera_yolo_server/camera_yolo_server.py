@@ -30,6 +30,12 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 from flask import Flask, Response, jsonify
 
+# paramiko 用于查询设备开机时长(/proc/uptime);缺失时 /uptime 返回不可用
+try:
+    import paramiko
+except Exception:  # noqa: BLE001
+    paramiko = None
+
 # 抑制 Flask 每帧访问日志(GET /camera 200 会刷屏),仅保留 ERROR 级别
 logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
@@ -371,10 +377,59 @@ def camera_stream():
     return Response(gen_mjpeg(), mimetype="multipart/x-mixed-replace; boundary=--boundary")
 
 
+# ===== 设备开机时长查询(SSH 读 /proc/uptime,带缓存)=====
+_DEVICE_HOST = "192.168.0.2"
+_DEVICE_USER = "nvidia"
+_DEVICE_PASS = "nvidia"
+_uptime_cache = {"value": 0, "ts": 0}
+_uptime_lock = threading.Lock()
+_UPTIME_TTL = 10  # 秒,避免频繁 SSH
+
+
+def _get_uptime_seconds():
+    """返回设备开机秒数;失败返回 -1。结果缓存 _UPTIME_TTL 秒。"""
+    global _uptime_cache
+    now = time.time()
+    with _uptime_lock:
+        if now - _uptime_cache["ts"] < _UPTIME_TTL and _uptime_cache["value"] > 0:
+            return _uptime_cache["value"]
+    if paramiko is None:
+        return -1
+    try:
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(_DEVICE_HOST, username=_DEVICE_USER, password=_DEVICE_PASS, timeout=4)
+        _, stdout, _ = client.exec_command("cat /proc/uptime", timeout=6)
+        out = stdout.read().decode("utf-8", "replace").strip()
+        client.close()
+        secs = float(out.split()[0])
+        with _uptime_lock:
+            _uptime_cache = {"value": secs, "ts": now}
+        return secs
+    except Exception:  # noqa: BLE001
+        return -1
+
+
+@app.route("/uptime")
+def uptime():
+    """设备开机时长(秒);设备不可达时返回 -1"""
+    return jsonify({"uptime": _get_uptime_seconds()})
+
+
 @app.route("/status")
 def status():
     """健康状况接口"""
     return jsonify(**_model_status)
+
+
+@app.route("/info")
+def info():
+    """服务配置信息:暴露原始相机 HTTP 基址,供前端定位深度/红外流(/depth /ir)"""
+    return jsonify({
+        "camera_url": CAMERA_URL,      # 原始相机流地址,如 http://192.168.0.2:8082/camera
+        "port": PORT,
+        "device": DEVICE,
+    })
 
 
 @app.after_request

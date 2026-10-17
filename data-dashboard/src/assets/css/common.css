@@ -144,6 +144,7 @@ body {
 
 /* 公共类：统一卡片结构（三页复用） .card > .card-header + .card-body */
 .card {
+    padding: 0;
     background: var(--bg-card);
     border-radius: var(--radius-md);
     overflow: hidden;

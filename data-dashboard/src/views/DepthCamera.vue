@@ -16,9 +16,14 @@
             </span>
           </div>
           <div class="card-body image-body">
+            <!-- 视图切换：彩色 / YOLO识别 / 深度图 / 红外图（全部走 HTTP 直连，不占 rosbridge） -->
+            <div class="view-toggle">
+              <button v-for="m in viewModes" :key="m.key" class="mini-btn" :class="{ active: viewMode === m.key }" @click="setView(m.key)">{{ m.label }}</button>
+            </div>
             <div class="image-wrapper">
               <img 
               v-show="cameraConnected"
+              :key="viewMode"
               :src="displayUrl" 
               alt="camera stream"
               class="camera-stream"
@@ -33,15 +38,6 @@
                 <div class="placeholder-icon"><svg class="icon-svg spin" viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg></div>
                 <div >{{ $t('camera.loadRetry', { count: cameraRetryCount, max: maxRetries }) }}</div>
               </div>
-            </div>
-            <!-- 视频源切换：默认 ROS 话题，可切换到 YOLO HTTP 流 -->
-            <div class="source-toggle">
-              <button class="mini-btn" :class="{ active: sourceMode === 'ros' }" @click="setSource('ros')">
-                ROS2 话题 ({{ $t('camera.rosTopic') }})
-              </button>
-              <button class="mini-btn" :class="{ active: sourceMode === 'python' }" @click="setSource('python')">
-                {{ $t('camera.httpStream') }} (http://localhost:8083/camera)
-              </button>
             </div>
           </div>
         </div>
@@ -63,10 +59,6 @@
               <div class="stat-item">
                 <div class="stat-label">{{ $t('camera.resolution') }}</div>
                 <div class="stat-value">{{ resolution }}</div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-label">{{ $t('camera.frameRate') }}</div>
-                <div class="stat-value">{{ fpsDisplay }} FPS</div>
               </div>
               <div class="stat-item">
                 <div class="stat-label">{{ $t('camera.format') }}</div>
@@ -140,50 +132,42 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { rosState, subscribeTopic, connectRos, updateVideoSource } from '@/store/rosState'
+import { rosState, subscribeTopic, connectRos } from '@/store/rosState'
 
 const { t } = useI18n()
 
-// ===== 工业相机（视频源：默认 ROS 话题，可切换 YOLO HTTP 流）=====
+// ===== 工业相机（视频直连 HTTP 流，由状态栏 CAM 地址指定）=====
 const cameraConnected = ref(false)
 const cameraError = ref('')
 const cameraUrl = ref(rosState.cameraUrl)
 const cameraRetryCount = ref(0)
 const maxRetries = 3
 
-// 视频源模式：'ros' = /camera/color/image_raw/compressed 话题；'python' = YOLO HTTP 流
-// 与底部状态栏全局切换联动
-const sourceMode = computed({
-  get: () => rosState.videoSource,
-  set: (mode) => updateVideoSource(mode)
+// 视频源：全部走 HTTP 直连（不占 rosbridge）。彩色/YOLO/深度/红外按当前视图切换。
+// YOLO 标注流 = CAM 地址(状态栏指定，如 http://localhost:8083/camera)
+// 彩色原图/深度/红外 = 设备 HTTP 服务(YOLO 后端 /info 返回的原始相机基址，如 http://192.168.0.2:8082)
+const deviceBase = ref('')
+const displayUrl = computed(() => {
+  const mode = viewMode.value
+  if (mode === 'yolo') return cameraUrl.value
+  const base = deviceBase.value
+  if (!base) return ''
+  const ep = { color: '/camera', depth: '/depth', ir: '/ir' }[mode] || '/camera'
+  // 依赖 cameraRetryCount 使重试时重新生成时间戳强制浏览器刷新
+  return `${base}${ep}?t=${Date.now()}&r=${cameraRetryCount.value}`
 })
-// ROS 压缩图像帧的对象 URL
-const rosFrameUrl = ref('')
-let lastFrameObjectUrl = ''
-// 当前显示地址
-const displayUrl = computed(() => sourceMode.value === 'python' ? cameraUrl.value : rosFrameUrl.value)
 
-// 将 ROS 压缩图像(base64 JPEG)转成可显示的 Blob URL
-const base64ToBlobUrl = (b64) => {
-  const binary = atob(b64)
-  const bytes = new Uint8Array(binary.length)
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-  const blob = new Blob([bytes], { type: 'image/jpeg' })
-  return URL.createObjectURL(blob)
-}
-
-// 切换视频源
-const setSource = (mode) => {
-  sourceMode.value = mode
-  cameraRetryCount.value = 0
-  if (mode === 'python') {
-    cameraUrl.value = `${rosState.cameraUrl}?t=${Date.now()}`
-    // 切换后需要等待 HTTP 流加载判断连接状态
-    cameraConnected.value = false
-    cameraError.value = ''
-  } else {
-    // ROS 话题模式：已有帧则保持连接
-    cameraConnected.value = !!rosFrameUrl.value
+// 从 YOLO 后端 /info 获取原始相机 HTTP 基址(用于彩色原图/深度/红外)
+const loadDeviceInfo = async () => {
+  const host = getYoloHost()
+  if (!host) return
+  try {
+    const res = await fetch(`${host}/info`)
+    const data = await res.json()
+    const m = (data.camera_url || '').match(/^(https?:\/\/[^/]+)/)
+    deviceBase.value = m ? m[1] : ''
+  } catch (e) {
+    deviceBase.value = ''
   }
 }
 
@@ -196,11 +180,27 @@ const fpsDisplay = computed(() => fps.value ? fps.value.toFixed(1) : '--')
 
 // 订阅句柄
 let cameraInfoListener = null
-let compressedListener = null
 let deviceStatusListener = null
 let diagnosticsListener = null
 let cameraRetryTimer = null
 let detectPollTimer = null
+
+// ===== 视图切换：彩色 / YOLO识别 / 深度图 / 红外图（全部 HTTP <img> 直连）=====
+const viewMode = ref('yolo')
+const viewModes = computed(() => [
+  { key: 'color', label: t('camera.colorView') },
+  { key: 'yolo', label: t('camera.yoloView') },
+  { key: 'depth', label: t('camera.depthView') },
+  { key: 'ir', label: t('camera.irView') },
+])
+
+// 切换视图：displayUrl 随视图变化，切换时重置连接状态以便加载新流
+const setView = (key) => {
+  viewMode.value = key
+  cameraConnected.value = false
+  cameraError.value = ''
+  cameraRetryCount.value = 0
+}
 
 // ===== 视觉识别统计（轮询 YOLO 后端 /detections）=====
 const detectionsReady = ref(false)
@@ -244,19 +244,20 @@ const cameraStatus = computed(() => {
 })
 
 // ===== 生命周期 =====
-// 监听状态栏 CAM 地址变化：python 模式下重新加载相机流（加时间戳防缓存）
+// 监听状态栏 CAM 地址变化：重新加载相机 HTTP 流（加时间戳防缓存），并刷新设备基址
 watch(() => rosState.cameraUrl, (newUrl) => {
-  if (sourceMode.value !== 'python') return
   cameraConnected.value = false
   cameraError.value = ''
   cameraRetryCount.value = 0
   cameraUrl.value = `${newUrl}?t=${Date.now()}`
+  loadDeviceInfo()
 })
 
 onMounted(() => {
   window.addEventListener('resize', handleResize)
   connectRos()
   subscribeToTopics()
+  loadDeviceInfo()
   // 轮询 YOLO 检测统计（后台持续刷新）
   pollDetections()
   detectPollTimer = setInterval(pollDetections, 1500)
@@ -266,10 +267,8 @@ onUnmounted(() => {
   if (detectPollTimer) { clearInterval(detectPollTimer); detectPollTimer = null }
   if (cameraRetryTimer) clearTimeout(cameraRetryTimer)
   if (cameraInfoListener) { cameraInfoListener.unsubscribe(); cameraInfoListener = null }
-  if (compressedListener) { compressedListener.unsubscribe(); compressedListener = null }
   if (deviceStatusListener) { deviceStatusListener.unsubscribe(); deviceStatusListener = null }
   if (diagnosticsListener) { diagnosticsListener.unsubscribe(); diagnosticsListener = null }
-  if (lastFrameObjectUrl) { URL.revokeObjectURL(lastFrameObjectUrl); lastFrameObjectUrl = '' }
   window.removeEventListener('resize', handleResize)
 })
 
@@ -278,17 +277,18 @@ const handleResize = () => {}
 
 // ===== 工业相机加载失败 =====
 const onCameraError = () => {
-  // ROS 话题模式下由收到帧判定连接，不触发 HTTP 重试
-  if (sourceMode.value !== 'python') return
   // MJPEG 流加载阶段会触发 error，但连接后忽略（可能是流短暂中断后正常重连）
   if (cameraConnected.value) return
 
   cameraRetryCount.value++
   if (cameraRetryCount.value <= maxRetries) {
-    // 添加时间戳防止缓存
-    cameraRetryTimer = setTimeout(() => {
-      cameraUrl.value = `${rosState.cameraUrl}?t=${Date.now()}`
-    }, 1000)
+    // cameraRetryCount 是 displayUrl 的依赖，++ 会触发其重算生成新时间戳强制刷新；
+    // 仅 YOLO 视图额外刷新 CAM 地址
+    if (viewMode.value === 'yolo') {
+      cameraRetryTimer = setTimeout(() => {
+        cameraUrl.value = `${rosState.cameraUrl}?t=${Date.now()}`
+      }, 1000)
+    }
   } else {
     cameraConnected.value = false
     cameraError.value = t('camera.loadFail')
@@ -310,22 +310,6 @@ const subscribeToTopics = () => {
       resolution.value = `${msg.width} x ${msg.height}`
     }
     updateFps()
-  })
-
-  // 压缩图像话题：默认视频源（实时显示相机画面）
-  compressedListener = subscribeTopic('/camera/color/image_raw/compressed', 'sensor_msgs/CompressedImage', (msg) => {
-    if (!msg.data) return
-    try {
-      const url = base64ToBlobUrl(msg.data)
-      if (lastFrameObjectUrl) URL.revokeObjectURL(lastFrameObjectUrl)
-      lastFrameObjectUrl = url
-      rosFrameUrl.value = url
-      cameraConnected.value = true
-      cameraError.value = ''
-      cameraRetryCount.value = 0
-    } catch (e) {
-      // base64 解析失败则忽略本帧
-    }
   })
 
   // 相机设备状态（帧率/延迟/在线/连接类型）
@@ -448,6 +432,32 @@ const updateFps = () => {
   width: 100%;
 }
 
+/* 视图切换按钮（彩色识别/深度图/红外图） */
+.view-toggle {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+}
+
+.view-toggle .mini-btn {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(22, 93, 255, 0.3);
+  color: #8b9bb4;
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.view-toggle .mini-btn.active {
+  background: rgba(0, 229, 255, 0.15);
+  border-color: rgba(0, 229, 255, 0.5);
+  color: #00E5FF;
+}
+
 .source-toggle .mini-btn {
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(22, 93, 255, 0.3);
@@ -500,6 +510,11 @@ const updateFps = () => {
 }
 
 /* 工业相机信息卡片：去掉滚动条 */
+.stats-card {
+  /* 基础 .card 默认 flex:1，这里加大弹性权重让它占据更多高度空间 */
+  flex: 2;
+}
+
 .stats-card .card-body {
   overflow: hidden;
 }
@@ -662,10 +677,9 @@ const updateFps = () => {
 }
 
 .camera-stream {
-  max-width: 100%;
-  max-height: 100%;
-  width: auto;
-  height: auto;
+  /* 先按容器宽度铺满，高度按比例自适应且不超过框（与 YOLO 视图一致） */
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   border-radius: 4px;
   box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
@@ -739,6 +753,7 @@ const updateFps = () => {
 
 /* 卡片：玻璃质感渐变背景 + 顶部高光 + 青色边框 + hover 发光 */
 .card {
+  padding: 0;
   background: linear-gradient(180deg, rgba(13, 20, 33, 0.82) 0%, rgba(10, 16, 31, 0.55) 100%);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -884,6 +899,44 @@ const updateFps = () => {
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+/* 视图切换按钮：与视频源按钮同风格的强化样式 */
+.view-toggle .mini-btn {
+  border-radius: 6px;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, rgba(22, 93, 255, 0.12), rgba(0, 229, 255, 0.06));
+  border: 1px solid rgba(22, 93, 255, 0.3);
+  color: #8b9bb4;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  transition: all 0.25s ease;
+}
+
+.view-toggle .mini-btn:hover {
+  color: #e6f7ff;
+  border-color: rgba(0, 229, 255, 0.5);
+  background: linear-gradient(135deg, rgba(22, 93, 255, 0.35), rgba(0, 229, 255, 0.15));
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+.view-toggle .mini-btn:active {
+  transform: scale(0.96);
+  box-shadow: none;
+}
+
+.view-toggle .mini-btn.active {
+  background: linear-gradient(135deg, rgba(22, 93, 255, 0.85), rgba(0, 229, 255, 0.7));
+  border-color: rgba(0, 229, 255, 0.6);
+  color: #ffffff;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.35);
+}
+
+.view-toggle .mini-btn.active:hover {
+  background: linear-gradient(135deg, rgba(22, 93, 255, 0.95), rgba(0, 229, 255, 0.85));
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.45);
 }
 
 /* 日志条：hover 微高亮 + 时间戳等宽字体 */
