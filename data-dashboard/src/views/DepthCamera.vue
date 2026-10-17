@@ -66,7 +66,7 @@
               </div>
               <div class="stat-item">
                 <div class="stat-label">{{ $t('camera.frameRate') }}</div>
-                <div class="stat-value">{{ fps }} FPS</div>
+                <div class="stat-value">{{ fpsDisplay }} FPS</div>
               </div>
               <div class="stat-item">
                 <div class="stat-label">{{ $t('camera.format') }}</div>
@@ -113,16 +113,12 @@
             </div>
             <div class="live-rows">
               <div class="live-row">
-                <span class="live-label">{{ $t('camera.depthFilter') }}</span>
-                <span class="live-value" :class="depthFilterOk ? 'ok' : 'warn'">{{ depthFilterStatus }}</span>
-              </div>
-              <div class="live-row">
-                <span class="live-label">{{ $t('camera.deviceStatus') }}</span>
-                <span class="live-value" :class="deviceOk ? 'ok' : 'warn'">{{ deviceStatus }}</span>
-              </div>
-              <div class="live-row">
                 <span class="live-label">{{ $t('camera.resolution') }}</span>
                 <span class="live-value">{{ resolution }}</span>
+              </div>
+              <div class="live-row">
+                <span class="live-label">{{ $t('camera.videoAddr') }}</span>
+                <span class="live-value">{{ rosState.cameraUrl }}</span>
               </div>
             </div>
           </div>
@@ -209,17 +205,9 @@ const resolution = ref('--')
 // 帧率：由 camera_info 消息到达间隔计算得到（真实值）
 const fps = ref(0)
 const fpsDisplay = computed(() => fps.value ? fps.value.toFixed(1) : '--')
-// 深度滤波状态（/camera/depth_filter_status, std_msgs/String）
-const depthFilterStatus = ref('--')
-const depthFilterOk = computed(() => depthFilterStatus.value === 'active' || depthFilterStatus.value === 'enabled' || depthFilterStatus.value.toLowerCase().includes('active'))
-// 相机设备状态（/camera/device_status, orbbec_camera_msgs/DeviceStatus）
-const deviceStatus = ref('--')
-const deviceOk = computed(() => cameraConnected.value && /ok|online|normal/i.test(deviceStatus.value))
 
 // 订阅句柄
 let cameraInfoListener = null
-let depthFilterListener = null
-let deviceStatusListener = null
 let compressedListener = null
 let cameraRetryTimer = null
 
@@ -243,8 +231,6 @@ onMounted(() => {
 onUnmounted(() => {
   if (cameraRetryTimer) clearTimeout(cameraRetryTimer)
   if (cameraInfoListener) { cameraInfoListener.unsubscribe(); cameraInfoListener = null }
-  if (depthFilterListener) { depthFilterListener.unsubscribe(); depthFilterListener = null }
-  if (deviceStatusListener) { deviceStatusListener.unsubscribe(); deviceStatusListener = null }
   if (compressedListener) { compressedListener.unsubscribe(); compressedListener = null }
   if (lastFrameObjectUrl) { URL.revokeObjectURL(lastFrameObjectUrl); lastFrameObjectUrl = '' }
   window.removeEventListener('resize', handleResize)
@@ -276,10 +262,12 @@ const onCameraError = () => {
 
 // ===== 工业相机加载成功 =====
 const onCameraLoad = () => {
+  // 只在断开→连接首次成功时记一次日志,避免每帧重复记录
+  const wasConnected = cameraConnected.value
   cameraConnected.value = true
   cameraError.value = ''
   cameraRetryCount.value = 0
-  addLogEntry(t('camera.loadSuccess'))
+  if (!wasConnected) addLogEntry(t('camera.loadSuccess'))
 }
 
 // ===== 订阅真实相机话题（使用全局共享连接）=====
@@ -306,17 +294,6 @@ const subscribeToTopics = () => {
     } catch (e) {
       // base64 解析失败则忽略本帧
     }
-  })
-
-  // 深度滤波状态
-  depthFilterListener = subscribeTopic('/camera/depth_filter_status', 'std_msgs/String', (msg) => {
-    depthFilterStatus.value = msg.data
-  })
-
-  // 相机设备状态
-  deviceStatusListener = subscribeTopic('/camera/device_status', 'orbbec_camera_msgs/DeviceStatus', (msg) => {
-    const raw = msg && msg.data ? msg.data : JSON.stringify(msg || {})
-    deviceStatus.value = typeof raw === 'string' ? raw : String(raw)
   })
 }
 
