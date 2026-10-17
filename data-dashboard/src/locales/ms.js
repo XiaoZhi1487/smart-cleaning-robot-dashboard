@@ -110,8 +110,12 @@ export default {
     noFrame: 'Tiada data imej',
     depthFilter: 'Penapis Kedalaman',
     deviceStatus: 'Status Peranti',
-    rosConnected: 'ROS Disambungkan',
-    rosClosed: 'Sambungan ROS ditutup'
+    rosConnected: 'ROS disambungkan',
+    rosClosed: 'Sambungan ROS ditutup',
+    rosTopic: '/camera/color/image_raw/compressed',
+    httpStream: 'Aliran YOLO',
+    switchRos: 'Beralih ke aliran topik ROS',
+    switchHttp: 'Beralih ke aliran HTTP YOLO'
   },
   screen: {
     pageTitle: 'Robot Pembersih Dinding Tinggi - Papan Pemuka Pemantauan Masa Nyata',

@@ -111,7 +111,11 @@ export default {
     depthFilter: 'Depth Filter',
     deviceStatus: 'Device Status',
     rosConnected: 'ROS Connected',
-    rosClosed: 'ROS Connection Closed'
+    rosClosed: 'ROS Connection Closed',
+    rosTopic: '/camera/color/image_raw/compressed',
+    httpStream: 'YOLO stream',
+    switchRos: 'Switched to ROS topic stream',
+    switchHttp: 'Switched to YOLO HTTP stream'
   },
   screen: {
     pageTitle: 'Curtain Wall Cleaning Robot - Real-time Monitoring Dashboard',

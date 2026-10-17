@@ -111,7 +111,11 @@ export default {
     depthFilter: 'Lọc độ sâu',
     deviceStatus: 'Trạng thái thiết bị',
     rosConnected: 'Đã kết nối ROS',
-    rosClosed: 'Đã ngắt kết nối ROS'
+    rosClosed: 'Đã ngắt kết nối ROS',
+    rosTopic: '/camera/color/image_raw/compressed',
+    httpStream: 'Luồng YOLO',
+    switchRos: 'Đã chuyển sang luồng topic ROS',
+    switchHttp: 'Đã chuyển sang luồng HTTP YOLO'
   },
   screen: {
     pageTitle: 'Robot Làm Sạch Tường Cao - Bảng Giám Sát Thời Gian Thực',

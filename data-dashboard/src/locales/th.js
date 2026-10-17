@@ -111,7 +111,11 @@ export default {
     depthFilter: 'การกรองความลึก',
     deviceStatus: 'สถานะอุปกรณ์',
     rosConnected: 'เชื่อมต่อ ROS สำเร็จ',
-    rosClosed: 'ปิดการเชื่อมต่อ ROS'
+    rosClosed: 'ปิดการเชื่อมต่อ ROS',
+    rosTopic: '/camera/color/image_raw/compressed',
+    httpStream: 'สตรีม YOLO',
+    switchRos: 'สลับไปสตรีมหัวข้อ ROS',
+    switchHttp: 'สลับไปสตรีม HTTP ของ YOLO'
   },
   screen: {
     pageTitle: 'หุ่นยนต์ทำความสะอาดผนังม่านอาคารสูง - จอแสดงผลเรียลไทม์',

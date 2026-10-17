@@ -19,7 +19,7 @@
             <div class="image-wrapper">
               <img 
               v-show="cameraConnected"
-              :src="cameraUrl" 
+              :src="displayUrl" 
               alt="camera stream"
               class="camera-stream"
               @load="onCameraLoad"
@@ -33,6 +33,15 @@
                 <div class="placeholder-icon">🔄</div>
                 <div >{{ $t('camera.loadRetry', { count: cameraRetryCount, max: maxRetries }) }}</div>
               </div>
+            </div>
+            <!-- 视频源切换：默认 ROS 话题，可切换到 YOLO HTTP 流 -->
+            <div class="source-toggle">
+              <button class="mini-btn" :class="{ active: sourceMode === 'ros' }" @click="setSource('ros')">
+                ROS 话题 ({{ $t('camera.rosTopic') }})
+              </button>
+              <button class="mini-btn" :class="{ active: sourceMode === 'http' }" @click="setSource('http')">
+                {{ $t('camera.httpStream') }} (http://localhost:8083/camera)
+              </button>
             </div>
           </div>
         </div>
@@ -150,12 +159,45 @@ import { rosState, subscribeTopic, connectRos } from '@/store/rosState'
 
 const { t } = useI18n()
 
-// ===== 工业相机（MJPEG 视频流，地址来自底部状态栏设置）=====
+// ===== 工业相机（视频源：默认 ROS 话题，可切换 YOLO HTTP 流）=====
 const cameraConnected = ref(false)
 const cameraError = ref('')
 const cameraUrl = ref(rosState.cameraUrl)
 const cameraRetryCount = ref(0)
 const maxRetries = 3
+
+// 视频源模式：'ros' = /camera/color/image_raw/compressed 话题；'http' = YOLO 带标注流
+const sourceMode = ref('ros')
+// ROS 压缩图像帧的对象 URL
+const rosFrameUrl = ref('')
+let lastFrameObjectUrl = ''
+// 当前显示地址
+const displayUrl = computed(() => sourceMode.value === 'http' ? cameraUrl.value : rosFrameUrl.value)
+
+// 将 ROS 压缩图像(base64 JPEG)转成可显示的 Blob URL
+const base64ToBlobUrl = (b64) => {
+  const binary = atob(b64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+  const blob = new Blob([bytes], { type: 'image/jpeg' })
+  return URL.createObjectURL(blob)
+}
+
+// 切换视频源
+const setSource = (mode) => {
+  sourceMode.value = mode
+  cameraRetryCount.value = 0
+  if (mode === 'http') {
+    cameraUrl.value = `${rosState.cameraUrl}?t=${Date.now()}`
+    // 切换后需要等待 HTTP 流加载判断连接状态
+    cameraConnected.value = false
+    cameraError.value = ''
+  } else {
+    // ROS 话题模式：已有帧则保持连接
+    cameraConnected.value = !!rosFrameUrl.value
+  }
+  addLogEntry(mode === 'http' ? t('camera.switchHttp') : t('camera.switchRos'))
+}
 
 // ===== 真实相机话题数据（来自 /camera/*）=====
 // 分辨率 / 帧率（来自 /camera/color/camera_info）
@@ -174,6 +216,7 @@ const deviceOk = computed(() => cameraConnected.value && /ok|online|normal/i.tes
 let cameraInfoListener = null
 let depthFilterListener = null
 let deviceStatusListener = null
+let compressedListener = null
 let cameraRetryTimer = null
 
 // 数据日志
@@ -198,6 +241,8 @@ onUnmounted(() => {
   if (cameraInfoListener) { cameraInfoListener.unsubscribe(); cameraInfoListener = null }
   if (depthFilterListener) { depthFilterListener.unsubscribe(); depthFilterListener = null }
   if (deviceStatusListener) { deviceStatusListener.unsubscribe(); deviceStatusListener = null }
+  if (compressedListener) { compressedListener.unsubscribe(); compressedListener = null }
+  if (lastFrameObjectUrl) { URL.revokeObjectURL(lastFrameObjectUrl); lastFrameObjectUrl = '' }
   window.removeEventListener('resize', handleResize)
 })
 
@@ -206,6 +251,8 @@ const handleResize = () => {}
 
 // ===== 工业相机加载失败 =====
 const onCameraError = () => {
+  // ROS 话题模式下由收到帧判定连接，不触发 HTTP 重试
+  if (sourceMode.value !== 'http') return
   // MJPEG 流加载阶段会触发 error，但连接后忽略（可能是流短暂中断后正常重连）
   if (cameraConnected.value) return
 
@@ -239,6 +286,22 @@ const subscribeToTopics = () => {
       resolution.value = `${msg.width} x ${msg.height}`
     }
     updateFps()
+  })
+
+  // 压缩图像话题：默认视频源（实时显示相机画面）
+  compressedListener = subscribeTopic('/camera/color/image_raw/compressed', 'sensor_msgs/CompressedImage', (msg) => {
+    if (!msg.data) return
+    try {
+      const url = base64ToBlobUrl(msg.data)
+      if (lastFrameObjectUrl) URL.revokeObjectURL(lastFrameObjectUrl)
+      lastFrameObjectUrl = url
+      rosFrameUrl.value = url
+      cameraConnected.value = true
+      cameraError.value = ''
+      cameraRetryCount.value = 0
+    } catch (e) {
+      // base64 解析失败则忽略本帧
+    }
   })
 
   // 深度滤波状态
@@ -332,8 +395,36 @@ const addLogEntry = (message) => {
 .image-body {
   padding: 12px;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
+  gap: 10px;
+}
+
+/* 视频源切换按钮 */
+.source-toggle {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+}
+
+.source-toggle .mini-btn {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(22, 93, 255, 0.3);
+  color: #8b9bb4;
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.source-toggle .mini-btn.active {
+  background: rgba(0, 229, 255, 0.15);
+  border-color: rgba(0, 229, 255, 0.5);
+  color: #00E5FF;
 }
 
 .image-wrapper {

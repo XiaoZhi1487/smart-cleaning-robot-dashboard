@@ -111,7 +111,11 @@ export default {
     depthFilter: 'Filter Kedalaman',
     deviceStatus: 'Status Perangkat',
     rosConnected: 'ROS Terhubung',
-    rosClosed: 'Koneksi ROS ditutup'
+    rosClosed: 'Koneksi ROS ditutup',
+    rosTopic: '/camera/color/image_raw/compressed',
+    httpStream: 'Aliran YOLO',
+    switchRos: 'Beralih ke aliran topik ROS',
+    switchHttp: 'Beralih ke aliran HTTP YOLO'
   },
   screen: {
     pageTitle: 'Robot Pembersih Dinding Tinggi - Dasbor Pemantauan Real-time',

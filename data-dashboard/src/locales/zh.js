@@ -111,7 +111,11 @@ export default {
     depthFilter: '深度滤波',
     deviceStatus: '设备状态',
     rosConnected: 'ROS 连接成功',
-    rosClosed: 'ROS 连接关闭'
+    rosClosed: 'ROS 连接关闭',
+    rosTopic: '/camera/color/image_raw/compressed',
+    httpStream: 'YOLO 标注流',
+    switchRos: '已切换到 ROS 话题视频流',
+    switchHttp: '已切换到 YOLO HTTP 视频流'
   },
   screen: {
     pageTitle: '高空幕墙清洁机器人 - 实时监控大屏',
