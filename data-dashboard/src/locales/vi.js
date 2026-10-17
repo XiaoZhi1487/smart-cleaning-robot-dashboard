@@ -24,6 +24,7 @@ export default {
     connect: 'Kết nối',
     disconnect: 'Ngắt kết nối',
     apply: 'Áp dụng',
+    toggle: 'Nguồn video',
     copyright: '© 2026 Hệ Thống Giám Sát Robot Làm Sạch Thông Minh'
   },
   radar: {

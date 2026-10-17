@@ -24,6 +24,7 @@ export default {
     connect: 'เชื่อมต่อ',
     disconnect: 'ตัดการเชื่อมต่อ',
     apply: 'ใช้',
+    toggle: 'แหล่งวิดีโอ',
     copyright: '© 2026 ระบบตรวจสอบหุ่นยนต์ทำความสะอาดอัจฉริยะ'
   },
   radar: {

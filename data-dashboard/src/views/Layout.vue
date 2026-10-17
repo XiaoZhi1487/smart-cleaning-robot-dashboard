@@ -99,8 +99,10 @@
         <span class="status-item">
           <span class="status-dot" :class="{ active: rosState.connected }"></span>
           CAM:
-          <input v-model="cameraIp" class="mini-input ip-input" spellcheck="false" @change="applyCamera" />
-          <button class="mini-btn" @click="applyCamera">{{ $t('footer.apply') }}</button>
+          <input v-model="cameraIp" class="mini-input cam-input" spellcheck="false" @change="applyCamera" />
+          <button class="mini-btn" :class="{ active: videoSource === 'python' }" @click="toggleVideoSource">
+            {{ $t('footer.toggle') }}: {{ videoSource === 'ros' ? 'ROS2' : 'Python' }}
+          </button>
         </span>
         <span class="status-item">
           <span class="status-dot" :class="{ active: rosState.connected }"></span>
@@ -124,7 +126,7 @@ export default {
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { rosState, connectRos, disconnectRos, updateRosState, updateCameraUrl } from '@/store/rosState'
+import { rosState, connectRos, disconnectRos, updateRosState, updateCameraUrl, updateVideoSource } from '@/store/rosState'
 
 const router = useRouter()
 const { t, locale } = useI18n()
@@ -134,6 +136,16 @@ const rosIp = ref('192.168.0.2')
 const rosPort = ref('9090')
 // 相机（YOLO 带标注流）地址
 const cameraIp = ref('http://localhost:8083/camera')
+// 视频源模式：'ros' = ROS2 话题；'python' = Python YOLO HTTP 流（与全局联动）
+const videoSource = computed({
+  get: () => rosState.videoSource,
+  set: (mode) => updateVideoSource(mode)
+})
+
+// 切换视频源（只在 ROS2 话题 与 Python YOLO 流 之间切换）
+const toggleVideoSource = () => {
+  videoSource.value = videoSource.value === 'ros' ? 'python' : 'ros'
+}
 
 const parseRosUrl = () => {
   const m = rosState.url.match(/^ws:\/\/([^:]+):(\d+)/)
@@ -505,6 +517,11 @@ onMounted(() => {
   width: 52px;
 }
 
+/* CAM 地址输入框加宽到 180px */
+.mini-input.cam-input {
+  width: 180px;
+}
+
 .mini-btn {
   background: rgba(0, 229, 255, 0.15);
   border: 1px solid rgba(0, 229, 255, 0.4);
@@ -523,6 +540,12 @@ onMounted(() => {
 .mini-btn.danger {
   border-color: rgba(255, 51, 102, 0.4);
   color: #FF3366;
+}
+
+.mini-btn.active {
+  background: rgba(0, 229, 255, 0.3);
+  border-color: rgba(0, 229, 255, 0.7);
+  color: #00E5FF;
 }
 
 /* 页面切换动画 */

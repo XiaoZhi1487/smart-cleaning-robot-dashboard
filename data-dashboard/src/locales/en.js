@@ -24,6 +24,7 @@ export default {
     connect: 'Connect',
     disconnect: 'Disconnect',
     apply: 'Apply',
+    toggle: 'Source',
     copyright: '© 2026 Smart Cleaning Robot Monitoring System'
   },
   radar: {

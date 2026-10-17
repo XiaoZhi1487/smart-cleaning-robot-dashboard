@@ -24,6 +24,7 @@ export default {
     connect: 'Sambung',
     disconnect: 'Putuskan',
     apply: 'Guna',
+    toggle: 'Sumber video',
     copyright: '© 2026 Sistem Pemantauan Robot Pembersih Pintar'
   },
   radar: {

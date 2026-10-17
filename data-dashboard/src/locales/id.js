@@ -24,6 +24,7 @@ export default {
     connect: 'Hubungkan',
     disconnect: 'Putuskan',
     apply: 'Terapkan',
+    toggle: 'Sumber video',
     copyright: '© 2026 Sistem Pemantauan Robot Pembersih Cerdas'
   },
   radar: {

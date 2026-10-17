@@ -24,6 +24,7 @@ export default {
     connect: '连接',
     disconnect: '断开',
     apply: '应用',
+    toggle: '视频源',
     copyright: '© 2026 智能清洁机器人监控系统'
   },
   radar: {

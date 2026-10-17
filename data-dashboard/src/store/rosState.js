@@ -5,7 +5,8 @@ import ROSLIB from 'roslib'
 export const rosState = reactive({
   connected: false,
   url: localStorage.getItem('rosServerUrl') || 'ws://192.168.0.2:9090',
-  cameraUrl: localStorage.getItem('cameraUrl') || 'http://localhost:8083/camera'
+  cameraUrl: localStorage.getItem('cameraUrl') || 'http://localhost:8083/camera',
+  videoSource: localStorage.getItem('videoSource') || 'ros'
 })
 
 // 共享的单个 ROS 连接实例（由底部状态栏统一管理，各页面只负责订阅/发布）
@@ -61,4 +62,10 @@ export function updateRosState(url, connected) {
 export function updateCameraUrl(url) {
   rosState.cameraUrl = url
   localStorage.setItem('cameraUrl', url)
+}
+
+// 切换视频源：'ros' = ROS2 话题；'python' = Python YOLO HTTP 流
+export function updateVideoSource(mode) {
+  rosState.videoSource = mode === 'python' ? 'python' : 'ros'
+  localStorage.setItem('videoSource', rosState.videoSource)
 }
