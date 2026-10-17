@@ -1,0 +1,113 @@
+/* 全局重置 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Microsoft YaHei", "Roboto", sans-serif;
+}
+
+/* 科技感背景 */
+body {
+    background: #0a101f;
+    color: #fff;
+    min-height: 100vh;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-thumb {
+    background: #165DFF;
+    border-radius: 3px;
+}
+::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.05);
+}
+
+/* 公共类：科技感边框（发光渐变） */
+.border-tech {
+    border: 1px solid;
+    border-image: linear-gradient(45deg, #165DFF, #00E5FF, #165DFF) 1;
+    box-shadow: 0 0 10px rgba(22, 93, 255, 0.3);
+}
+
+/* 公共类：模块标题 */
+.module-title {
+    height: 40px;
+    line-height: 40px;
+    padding: 0 15px;
+    background: rgba(22, 93, 255, 0.1);
+    border-bottom: 1px solid rgba(22, 93, 255, 0.3);
+    font-size: 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+.module-title::before {
+    content: "";
+    width: 4px;
+    height: 16px;
+    background: #00E5FF;
+    margin-right: 8px;
+    border-radius: 2px;
+}
+
+/* 公共类：按钮样式 */
+.btn {
+    padding: 6px 16px;
+    background: linear-gradient(135deg, #165DFF, #00E5FF);
+    border: none;
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.btn:hover {
+    box-shadow: 0 0 10px rgba(22, 93, 255, 0.5);
+    transform: scale(1.05);
+}
+
+/* 公共类：状态标签 */
+.normal { color: #00FF96; }
+.warning { color: #FFCC00; }
+.error { color: #FF3366; }
+.none { color: #999; }
+
+/* 公共类：表格样式 */
+.table-container {
+    width: 100%;
+    margin-top: 20px;
+    background: rgba(10, 16, 31, 0.8);
+    border-radius: 4px;
+    border: 1px solid rgba(22, 93, 255, 0.2);
+    overflow: hidden;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+}
+th {
+    background: rgba(22, 93, 255, 0.1);
+    height: 48px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(22, 93, 255, 0.2);
+}
+td {
+    height: 48px;
+    font-size: 0.8125rem;
+    color: #e5e5e5;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+tr:hover {
+    background: rgba(22, 93, 255, 0.1);
+}
+
+/* 图标字体 */
+.iconfont {
+    margin-right: 4px;
+    font-size: 1rem;
+}

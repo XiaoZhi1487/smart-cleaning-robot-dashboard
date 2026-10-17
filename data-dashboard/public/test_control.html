@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STM32 机器人控制测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #0a101f 0%, #1a1f3a 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+        }
+        
+        .container {
+            background: rgba(10, 16, 31, 0.9);
+            border: 1px solid rgba(22, 93, 255, 0.3);
+            border-radius: 12px;
+            padding: 40px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 0 30px rgba(0, 229, 255, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #00E5FF;
+            margin-bottom: 30px;
+            font-size: 24px;
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+        }
+        
+        .config-section {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .config-title {
+            color: #8b9bb4;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .input-group label {
+            color: #8b9bb4;
+            font-size: 13px;
+            min-width: 60px;
+            line-height: 36px;
+        }
+        
+        .input-group input {
+            flex: 1;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(22, 93, 255, 0.3);
+            border-radius: 4px;
+            color: #fff;
+            font-size: 14px;
+        }
+        
+        .status-panel {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .status-label {
+            color: #8b9bb4;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        
+        .status-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #00E5FF;
+        }
+        
+        .status-value.error {
+            color: #FF3366;
+        }
+        
+        .status-value.success {
+            color: #00FF96;
+        }
+        
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            padding: 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(22, 93, 255, 0.2);
+            border: 1px solid rgba(22, 93, 255, 0.3);
+            color: #fff;
+        }
+        
+        .btn:hover {
+            background: rgba(22, 93, 255, 0.4);
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
+        }
+        
+        .btn:active {
+            transform: scale(0.95);
+        }
+        
+        .btn-direction {
+            background: linear-gradient(135deg, rgba(0, 229, 255, 0.2), rgba(22, 93, 255, 0.2));
+        }
+        
+        .btn-stop {
+            background: linear-gradient(135deg, rgba(255, 51, 102, 0.3), rgba(229, 57, 80, 0.3));
+            border-color: rgba(255, 51, 102, 0.5);
+            grid-column: 2;
+        }
+        
+        .btn-stop:hover {
+            background: linear-gradient(135deg, rgba(255, 51, 102, 0.5), rgba(229, 57, 80, 0.5));
+            box-shadow: 0 0 15px rgba(255, 51, 102, 0.4);
+        }
+        
+        .btn-brushless {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.2), rgba(255, 152, 0, 0.2));
+            border-color: rgba(255, 193, 7, 0.5);
+            font-size: 14px;
+        }
+        
+        .btn-brushless:hover {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.4), rgba(255, 152, 0, 0.4));
+        }
+        
+        .brushless-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(22, 93, 255, 0.2);
+        }
+        
+        .log-section {
+            margin-top: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .log-title {
+            color: #8b9bb4;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+        
+        .log-item {
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(22, 93, 255, 0.1);
+            color: #e6f7ff;
+        }
+        
+        .log-time {
+            color: #8b9bb4;
+            margin-right: 10px;
+        }
+        
+        .empty-log {
+            text-align: center;
+            color: #8b9bb4;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 STM32 控制测试</h1>
+        
+        <!-- 配置区域 -->
+        <div class="config-section">
+            <div class="config-title">⚙️ 服务器配置</div>
+            <div class="input-group">
+                <label>IP地址:</label>
+                <input type="text" id="serverIp" value="192.168.0.2" placeholder="192.168.0.2">
+            </div>
+            <div class="input-group">
+                <label>端口:</label>
+                <input type="text" id="serverPort" value="5000" placeholder="5000">
+            </div>
+        </div>
+        
+        <!-- 状态显示 -->
+        <div class="status-panel">
+            <div class="status-label">当前状态</div>
+            <div class="status-value" id="statusText">等待连接...</div>
+        </div>
+        
+        <!-- 方向控制 -->
+        <div class="control-grid">
+            <div></div>
+            <button class="btn btn-direction" onclick="sendCmd('forward')">▲<br>前进</button>
+            <div></div>
+            
+            <button class="btn btn-direction" onclick="sendCmd('turn_left')">◀<br>左转</button>
+            <button class="btn btn-stop" onclick="sendCmd('stop')">⏹<br>停止</button>
+            <button class="btn btn-direction" onclick="sendCmd('turn_right')">▶<br>右转</button>
+            
+            <div></div>
+            <button class="btn btn-direction" onclick="sendCmd('backward')">▼<br>后退</button>
+            <div></div>
+        </div>
+        
+        <!-- 无刷电机控制 -->
+        <div class="brushless-section">
+            <button class="btn btn-brushless" onclick="sendCmd('brushless_stop')">
+                🛑<br>无刷停止
+            </button>
+            <button class="btn btn-brushless" onclick="sendCmd('brushless_mid')">
+                ⚡<br>无刷中速
+            </button>
+        </div>
+        
+        <!-- 日志区域 -->
+        <div class="log-section">
+            <div class="log-title">📋 操作日志</div>
+            <div id="logList">
+                <div class="empty-log">点击按钮发送指令</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 获取服务器配置
+        function getServerUrl() {
+            const ip = document.getElementById('serverIp').value || '192.168.0.2';
+            const port = document.getElementById('serverPort').value || '5000';
+            return `http://${ip}:${port}`;
+        }
+        
+        // 添加日志
+        function addLog(message, isError = false) {
+            const logList = document.getElementById('logList');
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString();
+            
+            // 清空空提示
+            if (logList.querySelector('.empty-log')) {
+                logList.innerHTML = '';
+            }
+            
+            const logItem = document.createElement('div');
+            logItem.className = 'log-item';
+            logItem.innerHTML = `<span class="log-time">${timeStr}</span>${message}`;
+            logItem.style.color = isError ? '#FF3366' : '#e6f7ff';
+            
+            logList.insertBefore(logItem, logList.firstChild);
+            
+            // 限制日志数量
+            while (logList.children.length > 20) {
+                logList.removeChild(logList.lastChild);
+            }
+        }
+        
+        // 更新状态显示
+        function updateStatus(text, isError = false, isSuccess = false) {
+            const statusEl = document.getElementById('statusText');
+            statusEl.textContent = text;
+            statusEl.className = 'status-value';
+            if (isError) statusEl.classList.add('error');
+            if (isSuccess) statusEl.classList.add('success');
+        }
+        
+        // 发送控制指令
+        async function sendCmd(command) {
+            const API_URL = getServerUrl();
+            
+            updateStatus('发送指令: ' + command + '...');
+            addLog(`发送: ${command}`);
+            
+            try {
+                const res = await fetch(`${API_URL}/api/control`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        command: command,
+                        duration: 0  // 持续执行
+                    })
+                });
+                
+                const data = await res.json();
+                
+                if (data.status === 'ok') {
+                    updateStatus(`✅ ${command} | STM32: ${data.stm32_cmd || 'OK'}`, false, true);
+                    addLog(`成功: ${data.message || command}`, false);
+                } else {
+                    updateStatus(`❌ 错误: ${data.message || '未知错误'}`, true);
+                    addLog(`错误: ${data.message || '未知错误'}`, true);
+                }
+            } catch (e) {
+                updateStatus(`❌ 连接失败: ${e.message}`, true);
+                addLog(`连接失败: ${e.message}`, true);
+            }
+        }
+        
+        // 键盘控制
+        document.addEventListener('keydown', (e) => {
+            if (e.repeat) return;  // 防止长按重复触发
+            
+            const keyMap = {
+                'w': 'forward',
+                's': 'backward',
+                'a': 'turn_left',
+                'd': 'turn_right',
+                ' ': 'stop',
+                'ArrowUp': 'forward',
+                'ArrowDown': 'backward',
+                'ArrowLeft': 'turn_left',
+                'ArrowRight': 'turn_right'
+            };
+            
+            if (keyMap[e.key]) {
+                e.preventDefault();
+                sendCmd(keyMap[e.key]);
+            }
+        });
+        
+        // 页面加载提示
+        addLog('页面加载完成');
+        addLog('键盘快捷键: W/A/S/D 或 方向键, 空格=停止');
+    </script>
+</body>
+</html>
