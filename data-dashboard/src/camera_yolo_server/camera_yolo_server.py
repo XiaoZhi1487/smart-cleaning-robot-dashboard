@@ -50,8 +50,21 @@ def _parse_args():
 ARGS = _parse_args()
 CAMERA_URL = ARGS.camera            # 原始相机 MJPEG 流
 PORT = ARGS.port                    # 带标注流服务端口
-MODEL_PATH = ARGS.model or os.path.join(_SCRIPT_DIR, "tesch_yolo_server.pt")
 HOST = "0.0.0.0"
+
+
+def _pick_model_path():
+    """选择模型文件:优先 --model,否则从脚本目录挑选实际存在的 .pt 文件"""
+    if ARGS.model:
+        return ARGS.model
+    for name in ("tesch_yolo_server.pt", "tesch_yolo.pt", "zsl_yolo.pt", "yolo11n.pt"):
+        p = os.path.join(_SCRIPT_DIR, name)
+        if os.path.exists(p):
+            return p
+    return os.path.join(_SCRIPT_DIR, "tesch_yolo_server.pt")
+
+
+MODEL_PATH = _pick_model_path()
 
 # ===== 推理设备(自动检测 GPU) =====
 def _pick_device():

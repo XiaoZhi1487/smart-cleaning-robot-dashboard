@@ -58,7 +58,7 @@
             <div class="stats-grid">
               <div class="stat-item">
                 <div class="stat-label">{{ $t('camera.videoSource') }}</div>
-                <div class="stat-value">{{ $t('camera.industrialCamera') }}</div>
+                <div class="stat-value">RK3588 工业相机</div>
               </div>
               <div class="stat-item">
                 <div class="stat-label">{{ $t('camera.resolution') }}</div>
@@ -76,23 +76,6 @@
                 <div class="stat-label">{{ $t('camera.connState') }}</div>
                 <div class="stat-value" :class="{ warning: !cameraConnected }">
                   {{ cameraConnected ? $t('camera.connected') : $t('camera.disconnected') }}
-                </div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-label">{{ $t('camera.videoAddr') }}</div>
-                <div class="stat-value" style="font-size: 0.625rem;">localhost:8083</div>
-              </div>
-            </div>
-            
-            <!-- 连接说明 -->
-            <div class="depth-legend">
-              <div class="legend-title">{{ $t('camera.connInfo') }}</div>
-              <div class="legend-bar" style="padding: 10px;">
-                <div style="font-size: 0.6875rem; color: #8b9bb4; line-height: 1.6;">
-                  {{ $t('camera.streamAddr') }}<br/>
-                  http://localhost:8083/camera<br/><br/>
-                  {{ $t('camera.serverNote') }}<br/>
-                  {{ $t('camera.protocolNote') }}
                 </div>
               </div>
             </div>
@@ -118,28 +101,26 @@
               </div>
               <div class="live-row">
                 <span class="live-label">{{ $t('camera.videoAddr') }}</span>
-                <span class="live-value">{{ rosState.cameraUrl }}</span>
+                <span class="live-value">{{ videoSourceAddr }}</span>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- 底部连接日志 -->
-    <div class="bottom-section">
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">📋 {{ $t('camera.connLog') }}</span>
-        </div>
-        <div class="card-body log-body">
-          <div v-if="logs.length === 0" class="empty-log">
-            {{ cameraConnected ? $t('camera.cameraNormal') : $t('camera.waiting') }}
+        <!-- 连接日志（与相机信息、相机实时运行状态并列） -->
+        <div class="card log-card">
+          <div class="card-header">
+            <span class="card-title">📋 {{ $t('camera.connLog') }}</span>
           </div>
-          <div v-else class="log-list">
-            <div v-for="(log, index) in logs" :key="index" class="log-item">
-              <span class="log-time">{{ log.time }}</span>
-              <span class="log-data">{{ log.message }}</span>
+          <div class="card-body log-body">
+            <div v-if="logs.length === 0" class="empty-log">
+              {{ cameraConnected ? $t('camera.cameraNormal') : $t('camera.waiting') }}
+            </div>
+            <div v-else class="log-list">
+              <div v-for="(log, index) in logs" :key="index" class="log-item">
+                <span class="log-time">{{ log.time }}</span>
+                <span class="log-data">{{ log.message }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -173,6 +154,13 @@ const rosFrameUrl = ref('')
 let lastFrameObjectUrl = ''
 // 当前显示地址
 const displayUrl = computed(() => sourceMode.value === 'python' ? cameraUrl.value : rosFrameUrl.value)
+
+// 当前视频源显示地址（随切换的真实地址变化）
+const videoSourceAddr = computed(() => {
+  if (sourceMode.value === 'python') return rosState.cameraUrl
+  const host = rosState.url.replace(/^wss?:\/\//, '')
+  return `${host} /camera/color/image_raw/compressed`
+})
 
 // 将 ROS 压缩图像(base64 JPEG)转成可显示的 Blob URL
 const base64ToBlobUrl = (b64) => {
