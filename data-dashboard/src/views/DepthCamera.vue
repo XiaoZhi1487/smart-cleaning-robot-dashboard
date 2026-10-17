@@ -1,7 +1,7 @@
 <template>
   <div class="camera-container">
     <!-- 页面标题 -->
-    <div class="screen-title">📷 {{ $t('camera.pageTitle') }}</div>
+    <div class="screen-title"><svg class="icon-svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> {{ $t('camera.pageTitle') }}</div>
 
     <!-- 主内容区 - 使用 flex 布局 -->
     <div class="content-area">
@@ -10,7 +10,7 @@
         <!-- 工业相机视频流 -->
         <div class="card main-image-card">
           <div class="card-header">
-            <span class="card-title">📷 {{ $t('camera.cameraView') }}</span>
+            <span class="card-title"><svg class="icon-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> {{ $t('camera.cameraView') }}</span>
             <span class="camera-status" :class="{ active: cameraConnected }">
               {{ cameraStatus }}
             </span>
@@ -26,11 +26,11 @@
               @error="onCameraError"
               >
               <div v-if="!cameraConnected && cameraRetryCount === 0 " class="no-image">
-                <div class="placeholder-icon">📷</div>
+                <div class="placeholder-icon"><svg class="icon-svg" viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
                 <div>{{ $t('camera.waiting') }}</div>
               </div>
               <div v-else-if="!cameraConnected && cameraRetryCount > 0 " class="no-image">
-                <div class="placeholder-icon">🔄</div>
+                <div class="placeholder-icon"><svg class="icon-svg spin" viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg></div>
                 <div >{{ $t('camera.loadRetry', { count: cameraRetryCount, max: maxRetries }) }}</div>
               </div>
             </div>
@@ -52,7 +52,7 @@
         <!-- 工业相机信息 -->
         <div class="card stats-card">
           <div class="card-header">
-            <span class="card-title">📹 {{ $t('camera.cameraInfo') }}</span>
+            <span class="card-title"><svg class="icon-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8z"/><rect x="2" y="6" width="14" height="12" rx="2" ry="2"/></svg> {{ $t('camera.cameraInfo') }}</span>
           </div>
           <div class="card-body">
             <div class="stats-grid">
@@ -79,7 +79,7 @@
         <!-- 相机实时运行状态（基于真实 ROS 相机话题数据） -->
         <div class="card clean-card">
           <div class="card-header">
-            <span class="card-title">🧽 {{ $t('camera.liveStatus') }}</span>
+            <span class="card-title"><svg class="icon-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/></svg> {{ $t('camera.liveStatus') }}</span>
           </div>
           <div class="card-body clean-body">
             <div class="clean-value" :class="{ 'not-qualified': !cameraConnected }">
@@ -100,7 +100,7 @@
         <!-- 连接日志（与相机信息、相机实时运行状态并列） -->
         <div class="card log-card">
           <div class="card-header">
-            <span class="card-title">📋 {{ $t('camera.connLog') }}</span>
+            <span class="card-title"><svg class="icon-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg> {{ $t('camera.connLog') }}</span>
           </div>
           <div class="card-body log-body">
             <div v-if="logs.length === 0" class="empty-log">
@@ -120,7 +120,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { rosState, subscribeTopic, connectRos, updateVideoSource } from '@/store/rosState'
 
@@ -199,6 +199,16 @@ const cameraStatus = computed(() => {
 })
 
 // ===== 生命周期 =====
+// 监听状态栏 CAM 地址变化：python 模式下重新加载相机流（加时间戳防缓存）
+watch(() => rosState.cameraUrl, (newUrl) => {
+  if (sourceMode.value !== 'python') return
+  cameraConnected.value = false
+  cameraError.value = ''
+  cameraRetryCount.value = 0
+  cameraUrl.value = `${newUrl}?t=${Date.now()}`
+  addLogEntry(t('camera.switchHttp'))
+})
+
 onMounted(() => {
   window.addEventListener('resize', handleResize)
   connectRos()
@@ -339,6 +349,15 @@ const addLogEntry = (message) => {
 .main-image-card {
   flex: 1;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-image-card .card-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .right-section {
@@ -392,7 +411,9 @@ const addLogEntry = (message) => {
   justify-content: center;
   align-items: center;
   width: 100%;
-  min-height: 260px;
+  height: 100%;
+  min-height: 0;
+  flex: 1;
 }
 
 .camera-canvas {
@@ -547,8 +568,11 @@ const addLogEntry = (message) => {
 }
 
 .camera-stream {
-  width: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
   height: auto;
+  object-fit: contain;
   border-radius: 4px;
   box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
 }
@@ -653,5 +677,198 @@ const addLogEntry = (message) => {
   .stats-grid {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+/* ============ 视觉美化增强（覆盖/强化 common.css 基础样式，纯 scoped CSS） ============ */
+
+/* 卡片：玻璃质感渐变背景 + 顶部高光 + 青色边框 + hover 发光 */
+.card {
+  background: linear-gradient(180deg, rgba(13, 20, 33, 0.82) 0%, rgba(10, 16, 31, 0.55) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: 8px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* 卡片顶部高光 */
+.card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.55), transparent);
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.card:hover {
+  border-color: rgba(0, 229, 255, 0.45);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.2), 0 4px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* 卡片标题：加粗青色 + 轻微发光 */
+.card-header {
+  font-weight: 700;
+  color: #00E5FF;
+  background: linear-gradient(90deg, rgba(22, 93, 255, 0.16), rgba(22, 93, 255, 0.04));
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.35);
+}
+
+.card-title {
+  font-weight: 700;
+  color: #00E5FF;
+}
+
+/* 视频流容器：圆角 + 内发光边框 + hover 轻微发光 */
+.image-wrapper {
+  border-radius: 8px;
+  padding: 6px;
+  background: rgba(0, 0, 0, 0.25);
+  box-shadow: inset 0 0 0 1px rgba(0, 229, 255, 0.12), inset 0 0 24px rgba(0, 229, 255, 0.06), 0 0 10px rgba(0, 229, 255, 0.08);
+  transition: box-shadow 0.3s ease;
+}
+
+.image-wrapper:hover {
+  box-shadow: inset 0 0 0 1px rgba(0, 229, 255, 0.3), inset 0 0 24px rgba(0, 229, 255, 0.08), 0 0 14px rgba(0, 229, 255, 0.18);
+}
+
+.camera-stream {
+  border-radius: 6px;
+  border: 1px solid rgba(0, 229, 255, 0.15);
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.18);
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.image-wrapper:hover .camera-stream {
+  border-color: rgba(0, 229, 255, 0.35);
+  box-shadow: 0 0 22px rgba(0, 229, 255, 0.3);
+}
+
+.no-image {
+  border-radius: 8px;
+  border-color: rgba(0, 229, 255, 0.25);
+  background: rgba(10, 16, 31, 0.92);
+}
+
+/* 状态标签：胶囊样式 + hover 微高亮 */
+.camera-status {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #8b9bb4;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.25s ease;
+}
+
+.camera-status:hover {
+  background: rgba(0, 229, 255, 0.12);
+  border-color: rgba(0, 229, 255, 0.35);
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.2);
+}
+
+.camera-status.active {
+  color: #00FF96;
+  border-color: rgba(0, 255, 150, 0.35);
+  background: rgba(0, 255, 150, 0.08);
+  text-shadow: 0 0 8px rgba(0, 255, 150, 0.4);
+  box-shadow: 0 0 8px rgba(0, 255, 150, 0.15);
+}
+
+.camera-status.active:hover {
+  background: rgba(0, 255, 150, 0.14);
+  box-shadow: 0 0 12px rgba(0, 255, 150, 0.25);
+}
+
+/* 视频源切换按钮：渐变主色 + hover/active/disabled 反馈 */
+.source-toggle .mini-btn {
+  border-radius: 6px;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, rgba(22, 93, 255, 0.12), rgba(0, 229, 255, 0.06));
+  border: 1px solid rgba(22, 93, 255, 0.3);
+  color: #8b9bb4;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  transition: all 0.25s ease;
+}
+
+.source-toggle .mini-btn:hover {
+  color: #e6f7ff;
+  border-color: rgba(0, 229, 255, 0.5);
+  background: linear-gradient(135deg, rgba(22, 93, 255, 0.35), rgba(0, 229, 255, 0.15));
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+.source-toggle .mini-btn:active {
+  transform: scale(0.96);
+  box-shadow: none;
+}
+
+.source-toggle .mini-btn.active {
+  background: linear-gradient(135deg, rgba(22, 93, 255, 0.85), rgba(0, 229, 255, 0.7));
+  border-color: rgba(0, 229, 255, 0.6);
+  color: #ffffff;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.35);
+}
+
+.source-toggle .mini-btn.active:hover {
+  background: linear-gradient(135deg, rgba(22, 93, 255, 0.95), rgba(0, 229, 255, 0.85));
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.45);
+}
+
+.source-toggle .mini-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* 日志条：hover 微高亮 + 时间戳等宽字体 */
+.log-item {
+  border-radius: 4px;
+  padding: 5px 6px;
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+
+.log-item:hover {
+  background: rgba(0, 229, 255, 0.07);
+  box-shadow: inset 0 0 0 1px rgba(0, 229, 255, 0.15);
+}
+
+.log-time {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 0.6875rem;
+  color: #5a6a7f;
+  letter-spacing: 0.3px;
+}
+
+/* 数值：等宽字体 + 发光青色数字 */
+.stat-item {
+  background: linear-gradient(180deg, rgba(22, 93, 255, 0.1), rgba(22, 93, 255, 0.03));
+  border: 1px solid rgba(22, 93, 255, 0.15);
+  border-radius: 8px;
+}
+
+.stat-value {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-weight: 700;
+  color: #00E5FF;
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+}
+
+.clean-value {
+  font-family: 'Consolas', 'Monaco', monospace;
+}
+
+.live-value {
+  color: #00E5FF;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.3);
 }
 </style>

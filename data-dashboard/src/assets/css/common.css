@@ -1,14 +1,67 @@
+/* ============================================================
+   设计 Token（统一设计语言）—— 全局 CSS 变量
+   ============================================================ */
+:root {
+  /* 背景层级 */
+  --bg-base: #0a101f;          /* 全局深色背景 */
+  --bg-elevated: #0d1421;      /* 内容区/浮层背景 */
+  --bg-card: rgba(10, 16, 31, 0.8);
+  --bg-glass: rgba(13, 20, 33, 0.6);       /* 玻璃拟态底 */
+  --bg-input: rgba(0, 0, 0, 0.3);
+
+  /* 边框 */
+  --border-color: rgba(22, 93, 255, 0.2);
+  --border-strong: rgba(0, 229, 255, 0.4);
+  --border-faint: rgba(255, 255, 255, 0.05);
+
+  /* 品牌色 */
+  --primary: #165DFF;
+  --primary-hover: #4080FF;
+  --accent: #00E5FF;           /* 主强调色（科技青） */
+  --accent-dim: rgba(0, 229, 255, 0.1);
+  --success: #00FF96;
+  --warning: #FFCC00;
+  --danger: #FF3366;
+
+  /* 文字 */
+  --text-primary: #e6f7ff;
+  --text-secondary: #8b9bb4;
+  --text-muted: #5a6a7f;
+  --text-inverse: #0a101f;
+
+  /* 圆角 */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* 阴影 / 发光 */
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.35);
+  --shadow-accent: 0 0 12px rgba(0, 229, 255, 0.35);
+  --glow-primary: 0 0 10px rgba(22, 93, 255, 0.3);
+
+  /* 间距 */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+
+  /* 字体 */
+  --font-family: "Microsoft YaHei", "PingFang SC", "Roboto", sans-serif;
+  --font-mono: "Consolas", "Monaco", monospace;
+}
+
 /* 全局重置 */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: "Microsoft YaHei", "Roboto", sans-serif;
+    font-family: var(--font-family);
 }
 
 /* 科技感背景 */
 body {
-    background: #0a101f;
+    background: var(--bg-base);
     color: #fff;
     min-height: 100vh;
 }
@@ -19,8 +72,11 @@ body {
     height: 6px;
 }
 ::-webkit-scrollbar-thumb {
-    background: #165DFF;
+    background: var(--primary);
     border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
 }
 ::-webkit-scrollbar-track {
     background: rgba(255,255,255,0.05);
@@ -29,8 +85,8 @@ body {
 /* 公共类：科技感边框（发光渐变） */
 .border-tech {
     border: 1px solid;
-    border-image: linear-gradient(45deg, #165DFF, #00E5FF, #165DFF) 1;
-    box-shadow: 0 0 10px rgba(22, 93, 255, 0.3);
+    border-image: linear-gradient(45deg, var(--primary), var(--accent), var(--primary)) 1;
+    box-shadow: var(--glow-primary);
 }
 
 /* 公共类：模块标题 */
@@ -39,52 +95,71 @@ body {
     line-height: 40px;
     padding: 0 15px;
     background: rgba(22, 93, 255, 0.1);
-    border-bottom: 1px solid rgba(22, 93, 255, 0.3);
+    border-bottom: 1px solid var(--border-color);
     font-size: 1rem;
     font-weight: 600;
     display: flex;
     align-items: center;
+    color: var(--text-primary);
 }
 .module-title::before {
     content: "";
     width: 4px;
     height: 16px;
-    background: #00E5FF;
+    background: var(--accent);
     margin-right: 8px;
     border-radius: 2px;
+    box-shadow: 0 0 6px rgba(0, 229, 255, 0.6);
 }
 
 /* 公共类：按钮样式 */
 .btn {
     padding: 6px 16px;
-    background: linear-gradient(135deg, #165DFF, #00E5FF);
+    background: linear-gradient(135deg, var(--primary), var(--accent));
     border: none;
     color: #fff;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
     transition: all 0.3s;
+    font-size: 0.875rem;
 }
 .btn:hover {
     box-shadow: 0 0 10px rgba(22, 93, 255, 0.5);
     transform: scale(1.05);
 }
+.btn:active {
+    transform: scale(0.98);
+}
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
 
 /* 公共类：状态标签 */
-.normal { color: #00FF96; }
-.warning { color: #FFCC00; }
-.error { color: #FF3366; }
+.normal { color: var(--success); }
+.warning { color: var(--warning); }
+.error { color: var(--danger); }
 .none { color: #999; }
 
 /* 公共类：统一卡片结构（三页复用） .card > .card-header + .card-body */
 .card {
-    background: rgba(10, 16, 31, 0.8);
-    border-radius: 8px;
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
     overflow: hidden;
-    border: 1px solid rgba(22, 93, 255, 0.2);
+    border: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     flex: 1;
     min-height: 0;
+    box-shadow: var(--shadow-card);
+    position: relative;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-card), 0 0 14px rgba(0, 229, 255, 0.15);
 }
 
 .card-header {
@@ -94,16 +169,31 @@ body {
     padding: 0 12px;
     font-size: 0.8125rem;
     font-weight: 600;
-    color: #00E5FF;
+    color: var(--accent);
     background: rgba(22, 93, 255, 0.1);
-    border-bottom: 1px solid rgba(22, 93, 255, 0.2);
+    border-bottom: 1px solid var(--border-color);
     flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+/* 卡片头装饰：左侧发光指示条 */
+.card-header::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--accent), var(--primary));
+    box-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
 }
 
 .card-title {
     display: flex;
     align-items: center;
     gap: 6px;
+    position: relative;
 }
 
 .card-body {
@@ -117,10 +207,11 @@ body {
 .table-container {
     width: 100%;
     margin-top: 20px;
-    background: rgba(10, 16, 31, 0.8);
-    border-radius: 4px;
-    border: 1px solid rgba(22, 93, 255, 0.2);
+    background: var(--bg-card);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
     overflow: hidden;
+    box-shadow: var(--shadow-card);
 }
 table {
     width: 100%;
@@ -132,13 +223,14 @@ th {
     height: 48px;
     font-size: 0.875rem;
     font-weight: 600;
-    border-bottom: 1px solid rgba(22, 93, 255, 0.2);
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
 }
 td {
     height: 48px;
     font-size: 0.8125rem;
     color: #e5e5e5;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid var(--border-faint);
 }
 tr:hover {
     background: rgba(22, 93, 255, 0.1);
@@ -148,4 +240,21 @@ tr:hover {
 .iconfont {
     margin-right: 4px;
     font-size: 1rem;
+}
+
+/* 内联 SVG 图标通用样式（文字前小图标） */
+.icon-svg {
+    display: inline-block;
+    vertical-align: middle;
+    flex-shrink: 0;
+    color: inherit;
+}
+
+/* 旋转动效（用于加载/等待图标） */
+.icon-svg.spin {
+    animation: icon-spin 1s linear infinite;
+}
+@keyframes icon-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }

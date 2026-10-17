@@ -2,7 +2,10 @@
   <div class="radar-page">
     <!-- 页面标题 -->
     <div class="page-header">
-      <h1 class="page-title">📡 {{ $t('radar.pageTitle') }}</h1>
+      <h1 class="page-title">
+        <svg class="icon-svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12 2 12"/><path d="M22 12a10 10 0 0 0-20 0"/><path d="M6 12a6 6 0 0 1 12 0"/><path d="M10 12a2 2 0 0 1 4 0"/></svg>
+        {{ $t('radar.pageTitle') }}
+      </h1>
     </div>
 
     <!-- 连接设置已移至左下角状态栏统一管理 -->
@@ -19,7 +22,7 @@
               :key="index"
               class="sensor-item"
               :class="{warning : sensor.distance > 0 && sensor.distance < WARNING_THRESHOLD}">
-                <div class="sensor-icon">📡</div>
+                <div class="sensor-icon"><svg class="icon-svg" :style="{ transform: index === 0 ? 'rotate(-90deg)' : index === 2 ? 'rotate(90deg)' : 'none' }" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12 2 12"/><path d="M22 12a10 10 0 0 0-20 0"/><path d="M6 12a6 6 0 0 1 12 0"/><path d="M10 12a2 2 0 0 1 4 0"/></svg></div>
                 <div class="sensor-name">{{ $t(sensor.positionKey) }}</div>
                 <div class="sensor-value">  
                   <span class="value-num">{{ sensor.distance > 0 ? sensor.distance : '--' }}</span>
@@ -33,26 +36,22 @@
           </div>
         </div> 
 
-        <!-- STM32 控制面板 -->
-         <!-- <div class="card control-card">
+        <!-- 雷达可视化 - 使用 Canvas 绘制三个方向的雷达图 -->
+        <div class="card radar-card">
           <div class="card-header">
-            <span class="card-title">机器人控制</span>
-            <span class="control-status" :class="{connectde: stm32Connected}">
-              {{ stm32tatus }}
-            </span>
+            <span class="card-title">{{ $t('radar.radarVisual') }}</span>
           </div>
-          <div class="card-body control-body">
-            <div class="currenr-status">
-              <span class="=status-label">当前指令：</span>
-              <span class="status-value" :class="{active: currentCommand !== '待机中'}">
+          <div class="card-body radar-body">
+            <canvas ref="radarCanvas" class="radar-canvas"></canvas>
+          </div>
+        </div>
+      </div>
 
-              </span>
-            </div>
-          </div>
-         </div> -->
+      <div class="right-section">
+        <!-- STM32 控制面板 -->
         <div class="card control-card">
           <div class="card-header">
-            <span class="card-title">🎮 {{ $t('radar.robotControl') }}</span>
+            <span class="card-title"><svg class="icon-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="m17 5-2 2"/><path d="m7 5 2 2"/><path d="M9 14a3 3 0 0 0 6 0"/><path d="M5 13a7 7 0 0 1 14 0"/></svg> {{ $t('radar.robotControl') }}</span>
             <span class="control-status" :class="{ connected: stm32Connected }">
               {{ stm32Status }}
             </span>
@@ -71,27 +70,27 @@
 
             <div class="control-grid">
               <div></div>
-              <button class="btn-control btn-dir" @mousedown="sendStm32Cmd('forward')" @mouseup="sendStm32Cmd('stop')" @mouseleave="sendStm32Cmd('stop')">▲<br>{{ $t('radar.forward') }}</button>
+              <button class="btn-control btn-dir" @mousedown="sendStm32Cmd('forward')" @mouseup="sendStm32Cmd('stop')" @mouseleave="sendStm32Cmd('stop')"><svg class="icon-svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19 0-14"/><path d="m6 11 6-6 6 6"/></svg><span>{{ $t('radar.forward') }}</span></button>
               <div></div>
               
-              <button class="btn-control btn-dir" @mousedown="sendStm32Cmd('turn_left')" @mouseup="sendStm32Cmd('stop')" @mouseleave="sendStm32Cmd('stop')">◀<br>{{ $t('radar.turnLeft') }}</button>
-              <button class="btn-control btn-stop" @click="sendStm32Cmd('stop')">⏹<br>{{ $t('radar.stop') }}</button>
-              <button class="btn-control btn-dir" @mousedown="sendStm32Cmd('turn_right')" @mouseup="sendStm32Cmd('stop')" @mouseleave="sendStm32Cmd('stop')">▶<br>{{ $t('radar.turnRight') }}</button>
+              <button class="btn-control btn-dir" @mousedown="sendStm32Cmd('turn_left')" @mouseup="sendStm32Cmd('stop')" @mouseleave="sendStm32Cmd('stop')"><svg class="icon-svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 5 12"/><path d="m11 18-6-6 6-6"/></svg><span>{{ $t('radar.turnLeft') }}</span></button>
+              <button class="btn-control btn-stop" @click="sendStm32Cmd('stop')"><svg class="icon-svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg><span>{{ $t('radar.stop') }}</span></button>
+              <button class="btn-control btn-dir" @mousedown="sendStm32Cmd('turn_right')" @mouseup="sendStm32Cmd('stop')" @mouseleave="sendStm32Cmd('stop')"><svg class="icon-svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12 19 12"/><path d="m13 6 6 6-6 6"/></svg><span>{{ $t('radar.turnRight') }}</span></button>
               
               <div></div>
-              <button class="btn-control btn-dir" @mousedown="sendStm32Cmd('backward')" @mouseup="sendStm32Cmd('stop')" @mouseleave="sendStm32Cmd('stop')">▼<br>{{ $t('radar.backward') }}</button>
+              <button class="btn-control btn-dir" @mousedown="sendStm32Cmd('backward')" @mouseup="sendStm32Cmd('stop')" @mouseleave="sendStm32Cmd('stop')"><svg class="icon-svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 5 0 14"/><path d="m18 13-6 6-6-6"/></svg><span>{{ $t('radar.backward') }}</span></button>
               <div></div>
             </div>
 
             <!-- 无刷电机控制 -->
             <div class="brushless-section">
-              <div class="section-title">⚙️ {{ $t('radar.brushControl') }}</div>
+              <div class="section-title"><svg class="icon-svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> {{ $t('radar.brushControl') }}</div>
               <div class="brushless-control">
                 <button class="btn-control btn-brushless" @click="sendStm32Cmd('brushless_stop')">
-                  🛑 {{ $t('radar.stop') }}
+                  <svg class="icon-svg" viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg> {{ $t('radar.stop') }}
                 </button>
                 <button class="btn-control btn-brushless-start" @click="sendStm32Cmd('brushless_start')">
-                  ⚡ {{ $t('radar.start') }}
+                  <svg class="icon-svg" viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M13 2 3 14h7l-1 8 10-12h-7z"/></svg> {{ $t('radar.start') }}
                 </button>
               </div>
             </div>
@@ -99,13 +98,13 @@
             <!-- 急停按钮 -->
             <div class="emergency-section">
               <button class="btn-emergency" @click="emergencyStop">
-                🚨 {{ $t('radar.emergency') }}
+                <svg class="icon-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg> {{ $t('radar.emergency') }}
               </button>
             </div>
 
             <!-- 操作日志 -->
             <div class="control-log">
-              <div class="log-title">📋 {{ $t('radar.operationLog') }}</div>
+              <div class="log-title"><svg class="icon-svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg> {{ $t('radar.operationLog') }}</div>
               <div class="log-list">
                 <div v-if="stm32Logs.length === 0" class="empty-log">{{ $t('radar.waitingOp') }}</div>
                 <div v-for="(log, index) in stm32Logs" :key="index" class="log-item" :class="{ error: log.isError }">
@@ -116,42 +115,6 @@
             </div>
           </div>
         </div>
-      </div>
-
-      <div class="right-section">
-        <!-- 雷达可视化 - 使用 Canvas 绘制三个方向的雷达图 -->
-        <div class="card radar-card">
-          <div class="card-header">
-            <span class="card-title">{{ $t('radar.radarVisual') }}</span>
-          </div>
-          <div class="card-body radar-body">
-            <canvas ref="radarCanvas" class="radar-canvas"></canvas>
-          </div>
-        </div>
-
-        <!-- 调试信息面板 -->
-        <div class="card">
-          <div class="card-header">
-            <span class="card-title">{{ $t('radar.debugInfo') }}</span>
-          </div>
-          <div class="card-body">
-            <div class="debug-list">
-              <div class="debug-item">
-                <span class="debug-label">{{ $t('radar.rawData') }}</span>
-                <span class="debug-value">{{ rawDataHex }}</span>
-              </div>
-              <div class="debug-item">
-                <span class="debug-label">{{ $t('radar.dataLen') }}</span>
-                <span class="debug-value">{{ rawDataLength }}</span>
-              </div>
-              <div class="debug-item">
-                <span class="debug-label">{{ $t('radar.parseStatus') }}</span>
-                <span class="debug-value" :class="{ success: parseSuccess, error: !parseSuccess }">{{ parseStatus }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
       </div>
     </div>
   </div>
@@ -172,6 +135,9 @@ const waveLengthListener = ref(null)
 const radarCanvas = ref(null)
 let canvasCtx = null
 let radarSize = 0
+// 扫描动画状态：扫描光束角度（弧度）与 RAF 句柄
+let scanAngle = 0
+let scanRafId = null
 
 // 警告阈值 (mm) - 距离小于此值时显示红色警告
 const WARNING_THRESHOLD = 200
@@ -316,19 +282,10 @@ const handleKeyUp = (e) => {
   }
 }
 
-// ===== 计算属性 =====
-// 原始数据十六进制显示，用于调试
-const rawDataHex = computed(() => {
-  if (!rawData.value || rawData.value.length === 0) return '--'
-  return rawData.value.map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ')
-})
-
-// 原始数据长度
-const rawDataLength = computed(() => rawData.value ? rawData.value.length : 0)
-
 // ===== 生命周期钩子 =====
 onMounted(() => {
   initCanvas()
+  startScanAnimation()
   connectRos()
   subscribeToTopic()
   window.addEventListener('resize', resizeCanvas)
@@ -337,6 +294,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  stopScanAnimation()
   if (waveLengthListener.value) { waveLengthListener.value.unsubscribe(); waveLengthListener.value = null }
   if (stm32ResultTopic) { stm32ResultTopic.unsubscribe(); stm32ResultTopic = null }
   if (stm32StatusTopic) { stm32StatusTopic.unsubscribe(); stm32StatusTopic = null }
@@ -351,19 +309,40 @@ const initCanvas = () => {
   resizeCanvas()
 }
 
-// 调整 Canvas 尺寸以适应容器，并适配高 DPI 屏幕
+// 启动扫描动画：驱动扫描光束角度并持续重绘雷达图
+const startScanAnimation = () => {
+  stopScanAnimation()
+  const tick = () => {
+    // 每帧旋转一个固定角度，形成从中心向外扫描的效果
+    scanAngle += 0.01
+    if (scanAngle > Math.PI * 2) scanAngle -= Math.PI * 2
+    renderRadar()
+    scanRafId = requestAnimationFrame(tick)
+  }
+  scanRafId = requestAnimationFrame(tick)
+}
+
+// 停止扫描动画
+const stopScanAnimation = () => {
+  if (scanRafId) {
+    cancelAnimationFrame(scanRafId)
+    scanRafId = null
+  }
+}
+
+// 调整 Canvas 绘图缓冲区尺寸以适配容器，并适配高 DPI 屏幕；显示尺寸由 CSS 控制（不设置固定宽高）
 const resizeCanvas = () => {
   if (!radarCanvas.value) return
   const container = radarCanvas.value.parentElement
-  const avail = Math.min(container.clientWidth - 40, container.clientHeight - 40, 400)
+  const w = container.clientWidth || 0
+  const h = container.clientHeight || 0
   // 容器尚未完成布局时跳过，避免出现 0 或负尺寸
-  if (avail <= 0) return
-  radarSize = avail
+  if (w <= 0 || h <= 0) return
+  radarSize = Math.min(w, h)
   const dpr = window.devicePixelRatio || 1
-  radarCanvas.value.style.width = radarSize + 'px'
-  radarCanvas.value.style.height = radarSize + 'px'
-  radarCanvas.value.width = Math.round(radarSize * dpr)
-  radarCanvas.value.height = Math.round(radarSize * dpr)
+  // 仅设置绘图缓冲区尺寸，CSS 负责实际显示尺寸（自适应容器）
+  radarCanvas.value.width = Math.round(w * dpr)
+  radarCanvas.value.height = Math.round(h * dpr)
   canvasCtx = radarCanvas.value.getContext('2d')
   if (canvasCtx) {
     canvasCtx.setTransform(dpr, 0, 0, dpr, 0, 0)
@@ -373,16 +352,21 @@ const resizeCanvas = () => {
 
 // 绘制雷达图 - 包含同心圆、十字线、方向标记和传感器数据（仅在尺寸或数据变化时调用）
 const renderRadar = () => {
-  if (!canvasCtx || !radarSize) return
+  if (!canvasCtx || !radarCanvas.value) return
+  const dpr = window.devicePixelRatio || 1
+  const cssW = radarCanvas.value.width / dpr
+  const cssH = radarCanvas.value.height / dpr
+  radarSize = Math.min(cssW, cssH)
+  if (!radarSize) return
 
   const ctx = canvasCtx
-  const centerX = radarSize / 2
-  const centerY = radarSize / 2
+  const centerX = cssW / 2
+  const centerY = cssH / 2
   const maxRadius = Math.min(centerX, centerY) - 34
 
   // 清空画布
   ctx.fillStyle = '#0a101f'
-  ctx.fillRect(0, 0, radarSize, radarSize)
+  ctx.fillRect(0, 0, cssW, cssH)
 
   // 绘制同心圆和距离刻度（125mm, 250mm, 375mm, 500mm）
   ctx.strokeStyle = 'rgba(0, 229, 255, 0.2)'
@@ -474,6 +458,31 @@ const renderRadar = () => {
   ctx.arc(centerX, centerY, 7, 0, Math.PI * 2)
   ctx.fillStyle = '#00E5FF'
   ctx.fill()
+
+  // 绘制扫描光束：从中心向外扫描的扇形
+  const sweepHalf = Math.PI / 12 // 光束半角（15°）
+  // 径向渐变：中心强、边缘淡出，模拟雷达扫描光束
+  const beam = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, maxRadius)
+  beam.addColorStop(0, 'rgba(0, 229, 255, 0.55)')
+  beam.addColorStop(0.6, 'rgba(0, 229, 255, 0.28)')
+  beam.addColorStop(1, 'rgba(0, 229, 255, 0)')
+  ctx.beginPath()
+  ctx.moveTo(centerX, centerY)
+  ctx.arc(centerX, centerY, maxRadius, scanAngle - sweepHalf, scanAngle + sweepHalf)
+  ctx.closePath()
+  ctx.fillStyle = beam
+  ctx.fill()
+
+  // 扫描光束前缘亮线
+  ctx.beginPath()
+  ctx.moveTo(centerX, centerY)
+  ctx.lineTo(
+    centerX + Math.cos(scanAngle) * maxRadius,
+    centerY + Math.sin(scanAngle) * maxRadius
+  )
+  ctx.strokeStyle = 'rgba(0, 229, 255, 0.9)'
+  ctx.lineWidth = 2
+  ctx.stroke()
 }
 
 // 订阅 ROS 话题 /wave_length（使用全局共享连接）
@@ -607,6 +616,8 @@ const getSensorStatusText = (sensor) => {
   flex-direction: column;
   gap: 12px;
   overflow-y: auto;
+  overflow-x: hidden;
+  min-width: 0;
 }
 
 .page-header {
@@ -728,20 +739,22 @@ const getSensorStatusText = (sensor) => {
 }
 
 .left-section {
-  flex: 1.35;
-  display: flex;
-  flex-direction: column;
+  flex: 1.1;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr 2fr;
   gap: 12px;
   min-width: 0;
+  min-height: 0;
 }
 
 .right-section {
-  flex: 0.85;
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  min-width: 280px;
-  max-width: 360px;
+  min-width: 300px;
+  max-width: 420px;
 }
 
 /* ===== 卡片样式（基础 .card/.card-header/.card-title/.card-body 已上提 common.css） ===== */
@@ -749,7 +762,29 @@ const getSensorStatusText = (sensor) => {
 .sensor-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: 1fr;
   gap: 12px;
+  width: 100%;
+  flex: 1;
+}
+
+/* 传感器数据卡片：占 grid 第一行，宽度高度拉满 */
+.left-section > .card:first-child {
+  width: 100%;
+  height: 100%;
+}
+
+.left-section > .card:first-child .card-body {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+/* 传感器卡片占满 grid 第一行 */
+.left-section > .card:first-child {
+  grid-row: 1;
 }
 
 .sensor-item {
@@ -759,6 +794,10 @@ const getSensorStatusText = (sensor) => {
   padding: 14px 10px;
   text-align: center;
   transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
 }
 
 .sensor-item:hover {
@@ -827,9 +866,9 @@ const getSensorStatusText = (sensor) => {
 
 /* ===== 雷达图容器 ===== */
 .radar-card {
-  flex: 1;
-  /* 高度下限，避免窗口过矮时雷达被压成 0 */
-  min-height: 240px;
+  /* 占两行，让雷达图更大 */
+  grid-row: span 2;
+  min-height: 0;
 }
 
 .radar-body {
@@ -843,38 +882,10 @@ const getSensorStatusText = (sensor) => {
 .radar-canvas {
   border-radius: 8px;
   box-shadow: 0 0 30px rgba(0, 229, 255, 0.2);
-  max-width: 100%;
-  max-height: 100%;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
-
-/* ===== 调试列表 ===== */
-.debug-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.debug-item {
-  display: flex;
-  gap: 10px;
-  font-family: 'Consolas', monospace;
-  font-size: 0.8125rem;
-  flex-wrap: wrap;
-}
-
-.debug-label {
-  color: #888;
-  min-width: 68px;
-}
-
-.debug-value {
-  color: #00E5FF;
-  word-break: break-all;
-  flex: 1;
-}
-
-.debug-value.success { color: #00FF96; }
-.debug-value.error { color: #FF3366; }
 
 /* ===== STM32 控制面板样式 ===== */
 .control-card {
@@ -1050,8 +1061,6 @@ const getSensorStatusText = (sensor) => {
   background: rgba(0, 0, 0, 0.3);
   border-radius: 6px;
   padding: 8px;
-  max-height: 84px;
-  overflow-y: auto;
 }
 
 .log-title {
@@ -1091,18 +1100,341 @@ const getSensorStatusText = (sensor) => {
 
 
 /* ===== 响应式布局 ===== */
-@media (max-width: 1024px) {
+@media (max-width: 1280px) {
   .content-area {
     flex-direction: column;
   }
-  
+
   .right-section {
     max-width: none;
     min-width: auto;
   }
-  
+
+  .left-section {
+    flex: none;
+  }
+
   .sensor-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ============================================================
+   视觉美化增强（深色科技风：玻璃拟态 + 青色发光）——纯样式叠加覆盖
+   ============================================================ */
+
+/* ---- 页面背景光晕 ---- */
+.radar-page {
+  background:
+    radial-gradient(900px 480px at 50% -8%, rgba(22, 93, 255, 0.14), transparent 60%),
+    radial-gradient(700px 420px at 90% 110%, rgba(0, 229, 255, 0.08), transparent 60%),
+    #0a101f;
+}
+
+/* ---- 卡片：玻璃质感渐变 + 顶部高光 + 青色边框发光 ---- */
+.card {
+  background: linear-gradient(165deg, rgba(22, 93, 255, 0.1) 0%, rgba(10, 16, 31, 0.85) 32%, rgba(13, 20, 33, 0.78) 100%);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: 8px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(0, 229, 255, 0.08);
+}
+
+/* 卡片顶部高光扫描线 */
+.card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.55), transparent);
+  pointer-events: none;
+}
+
+.card:hover {
+  border-color: rgba(0, 229, 255, 0.55);
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.45), 0 0 20px rgba(0, 229, 255, 0.18), inset 0 1px 0 rgba(0, 229, 255, 0.12);
+}
+
+/* ---- 卡片标题：左侧发光指示条 + 加粗青色 ---- */
+.card-header {
+  background: linear-gradient(90deg, rgba(0, 229, 255, 0.12), rgba(22, 93, 255, 0.05) 60%, transparent);
+  border-bottom: 1px solid rgba(0, 229, 255, 0.16);
+}
+
+.card-header::before {
+  width: 3px;
+  background: linear-gradient(180deg, #00E5FF, #165DFF);
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.75), 0 0 20px rgba(0, 229, 255, 0.35);
+}
+
+.card-title {
+  font-weight: 700;
+  color: #00E5FF;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.45);
+}
+
+/* ---- 传感器卡片项：玻璃渐变 ---- */
+.sensor-item {
+  background: linear-gradient(160deg, rgba(0, 229, 255, 0.07), rgba(22, 93, 255, 0.04) 55%, rgba(13, 20, 33, 0.4));
+  border: 1px solid rgba(0, 229, 255, 0.16);
+}
+
+.sensor-item:hover {
+  border-color: rgba(0, 229, 255, 0.6);
+  box-shadow: 0 0 22px rgba(0, 229, 255, 0.22), inset 0 0 12px rgba(0, 229, 255, 0.06);
+  transform: translateY(-2px);
+}
+
+.sensor-item.warning {
+  background: linear-gradient(160deg, rgba(255, 51, 102, 0.12), rgba(255, 51, 102, 0.04) 60%, rgba(13, 20, 33, 0.4));
+  border-color: rgba(255, 51, 102, 0.35);
+}
+
+.sensor-item.warning:hover {
+  border-color: rgba(255, 51, 102, 0.6);
+  box-shadow: 0 0 22px rgba(255, 51, 102, 0.22);
+}
+
+.sensor-icon {
+  filter: drop-shadow(0 0 6px rgba(0, 229, 255, 0.4));
+}
+
+.sensor-name {
+  color: #8b9bb4;
+}
+
+/* ---- 传感器数值：等宽字体 + 青色发光大数字 ---- */
+.value-num {
+  letter-spacing: 1px;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.55), 0 0 26px rgba(0, 229, 255, 0.25);
+}
+
+.sensor-item.warning .value-num {
+  text-shadow: 0 0 10px rgba(255, 51, 102, 0.6), 0 0 26px rgba(255, 51, 102, 0.28);
+}
+
+.value-unit {
+  color: #5a6a7f;
+}
+
+/* ---- 状态标签：胶囊化 + hover 微高亮 ---- */
+.sensor-status {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 10px;
+  line-height: 1.5;
+  background: rgba(0, 255, 150, 0.08);
+  border: 1px solid rgba(0, 255, 150, 0.22);
+  transition: all 0.25s;
+}
+
+.sensor-status.warning {
+  background: rgba(255, 51, 102, 0.1);
+  border-color: rgba(255, 51, 102, 0.28);
+}
+
+.sensor-status.error {
+  color: #5a6a7f;
+  background: rgba(90, 106, 127, 0.08);
+  border-color: rgba(90, 106, 127, 0.2);
+}
+
+.sensor-status:hover {
+  text-shadow: 0 0 8px currentColor;
+  filter: brightness(1.2);
+}
+
+/* ---- 雷达 Canvas 容器：圆角 + 内发光边框 + hover 微发光 ---- */
+.radar-body {
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  border-radius: 10px;
+  background: radial-gradient(circle at 50% 50%, rgba(0, 229, 255, 0.07), rgba(10, 16, 31, 0.55) 70%);
+  box-shadow: inset 0 0 26px rgba(0, 229, 255, 0.08);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.radar-body:hover {
+  border-color: rgba(0, 229, 255, 0.5);
+  box-shadow: inset 0 0 30px rgba(0, 229, 255, 0.14), 0 0 18px rgba(0, 229, 255, 0.12);
+}
+
+.radar-canvas {
+  border-radius: 8px;
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  box-shadow: 0 0 30px rgba(0, 229, 255, 0.2), inset 0 0 18px rgba(0, 229, 255, 0.12);
+  width: 100%;
+  height: 100%;
+}
+
+/* ---- 控制按钮：渐变主色 + hover/active/disabled 状态反馈 ---- */
+.btn-control {
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.2), rgba(22, 93, 255, 0.24));
+  border: 1px solid rgba(0, 229, 255, 0.35);
+  color: #e6f7ff;
+}
+
+.btn-control:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.36), rgba(22, 93, 255, 0.42));
+  border-color: rgba(0, 229, 255, 0.75);
+  box-shadow: 0 0 14px rgba(0, 229, 255, 0.4), 0 4px 18px rgba(0, 229, 255, 0.15);
+  color: #fff;
+}
+
+.btn-control:active:not(:disabled) {
+  transform: scale(0.93);
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.45);
+}
+
+.btn-control:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: saturate(0.3);
+  transform: none;
+}
+
+.btn-stop {
+  background: linear-gradient(135deg, rgba(255, 51, 102, 0.35), rgba(201, 30, 69, 0.35));
+  border-color: rgba(255, 51, 102, 0.55);
+  color: #fff;
+}
+
+.btn-stop:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(255, 51, 102, 0.55), rgba(201, 30, 69, 0.55));
+  border-color: rgba(255, 51, 102, 0.85);
+  box-shadow: 0 0 14px rgba(255, 51, 102, 0.45);
+}
+
+.btn-brushless {
+  background: linear-gradient(135deg, rgba(255, 204, 0, 0.18), rgba(255, 152, 0, 0.18));
+  border-color: rgba(255, 204, 0, 0.45);
+}
+
+.btn-brushless:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(255, 204, 0, 0.36), rgba(255, 152, 0, 0.36));
+  border-color: rgba(255, 204, 0, 0.7);
+  box-shadow: 0 0 12px rgba(255, 204, 0, 0.35);
+}
+
+.btn-brushless-start {
+  background: linear-gradient(135deg, rgba(0, 255, 150, 0.22), rgba(0, 229, 255, 0.22));
+  border-color: rgba(0, 255, 150, 0.5);
+}
+
+.btn-brushless-start:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(0, 255, 150, 0.4), rgba(0, 229, 255, 0.4));
+  border-color: rgba(0, 255, 150, 0.75);
+  box-shadow: 0 0 12px rgba(0, 255, 150, 0.35);
+}
+
+/* ---- 急停按钮：主题红色 + 呼吸发光 ---- */
+@keyframes emergencyPulse {
+  0%, 100% { box-shadow: 0 0 18px rgba(255, 51, 102, 0.45); }
+  50% { box-shadow: 0 0 32px rgba(255, 51, 102, 0.75); }
+}
+
+.btn-emergency {
+  background: linear-gradient(135deg, #FF3366, #c81e45);
+  border: 1px solid rgba(255, 51, 102, 0.6);
+  border-radius: 8px;
+  animation: emergencyPulse 2s ease-in-out infinite;
+}
+
+.btn-emergency:hover {
+  background: linear-gradient(135deg, #ff5588, #ff3366);
+  transform: scale(1.03);
+}
+
+.btn-emergency:active {
+  transform: scale(0.96);
+}
+
+/* ---- 当前指令状态 ---- */
+.current-status {
+  background: linear-gradient(90deg, rgba(0, 229, 255, 0.07), rgba(22, 93, 255, 0.04));
+  border: 1px solid rgba(0, 229, 255, 0.16);
+  border-radius: 8px;
+}
+
+.status-value.active {
+  color: #00E5FF;
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.6);
+}
+
+/* ---- 连接状态：状态圆点 + hover 微高亮 ---- */
+.control-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #5a6a7f;
+}
+
+.control-status::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #FF3366;
+  box-shadow: 0 0 8px rgba(255, 51, 102, 0.6);
+  transition: all 0.3s;
+}
+
+.control-status.connected {
+  color: #00FF96;
+}
+
+.control-status.connected::before {
+  background: #00FF96;
+  box-shadow: 0 0 8px rgba(0, 255, 150, 0.7);
+}
+
+.control-status:hover {
+  text-shadow: 0 0 8px currentColor;
+}
+
+/* ---- 控制面板分区标题 ---- */
+.section-title {
+  border-left: 3px solid #FFCC00;
+  color: #e6f7ff;
+  text-shadow: 0 0 6px rgba(255, 204, 0, 0.25);
+}
+
+/* ---- 操作日志 ---- */
+.control-log {
+  border: 1px solid rgba(0, 229, 255, 0.14);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(0, 229, 255, 0.04), rgba(0, 0, 0, 0.3));
+}
+
+.log-title {
+  letter-spacing: 1px;
+}
+
+.log-item:hover {
+  background: rgba(0, 229, 255, 0.05);
+  text-shadow: 0 0 6px rgba(0, 229, 255, 0.35);
+}
+
+.log-item.error:hover {
+  background: rgba(255, 51, 102, 0.06);
+  text-shadow: 0 0 6px rgba(255, 51, 102, 0.35);
+}
+
+/* ---- 调试信息 ---- */
+.debug-label {
+  color: #5a6a7f;
+}
+
+.debug-value {
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.3);
+}
+
+.debug-value.success { text-shadow: 0 0 8px rgba(0, 255, 150, 0.35); }
+.debug-value.error { text-shadow: 0 0 8px rgba(255, 51, 102, 0.35); }
+
+.debug-item:hover .debug-value {
+  filter: brightness(1.25);
 }
 </style>

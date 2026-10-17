@@ -14,7 +14,7 @@
           <div class="card-body">
             <div class="state-list">
               <div v-for="item in deviceItems" :key="item.key" class="state-item-row">
-                <span class="state-icon">{{ item.icon }}</span>
+                <span class="state-icon" v-html="item.icon"></span>
                 <span class="state-name">{{ item.name }}</span>
                 <span class="state-value" :class="item.stateClass">{{ item.value }}</span>
               </div>
@@ -152,23 +152,17 @@
                 </svg>
               </div>
               
-              <!-- 坐标信息 -->
-              <div class="position-info">
-                <div class="coord-item">X: <span class="coord-value">128.5</span> m</div>
-                <div class="coord-item">Y: <span class="coord-value">86.3</span> m</div>
-                <div class="coord-item">Z: <span class="coord-value">45.2</span> m</div>
-              </div>
             </div>
 
             <!-- 机器人状态 -->
             <div class="robot-state">
               <div class="state-badge">
-                <span class="badge-icon">📡</span>
+                <span class="badge-icon"><svg class="icon-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12 2 12"/><path d="M22 12a10 10 0 0 0-20 0"/><path d="M6 12a6 6 0 0 1 12 0"/><path d="M10 12a2 2 0 0 1 4 0"/></svg></span>
                 <span class="badge-label">{{ $t('screen.comm') }}</span>
                 <span class="badge-value" :class="commStateClass">{{ commStateText }}</span>
               </div>
               <div class="state-badge">
-                <span class="badge-icon">⚠️</span>
+                <span class="badge-icon"><svg class="icon-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>
                 <span class="badge-label">{{ $t('screen.fault') }}</span>
                 <span class="badge-value" :class="faultStateClass">{{ faultStateText }}</span>
               </div>
@@ -186,70 +180,6 @@
           </div>
           <div class="card-body">
             <div ref="todayChart" class="chart-container"></div>
-          </div>
-        </div>
-
-        <!-- 机器人控制 -->
-        <div class="card control-card" tabindex="0" @keydown="handleKeyDown" @keyup="handleKeyUp">
-          <div class="card-header control-header">
-            <span class="card-title">🎮 {{ $t('screen.robotControl') }}</span>
-            <span class="control-status-badge" :class="robotControlStatus">{{ robotControlStatusText }}</span>
-          </div>
-          <div class="card-body control-body">
-            <div class="control-grid-compact">
-              <div class="control-row-compact">
-                <button 
-                  class="control-btn-compact" 
-                  @click="moveRobot('left')" 
-                  :title="$t('screen.turnLeft') + ' (A)'"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M19 12H5M12 19l-7-7 7-7"/>
-                  </svg>
-                </button>
-                <button 
-                  class="control-btn-compact forward" 
-                  @click="moveRobot('forward')" 
-                  :title="$t('screen.forward') + ' (W/↑)'"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 19V5M5 12l7-7 7 7"/>
-                  </svg>
-                </button>
-                <button 
-                  class="control-btn-compact" 
-                  @click="moveRobot('right')" 
-                  :title="$t('screen.turnRight') + ' (D)'"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M5 12h14M12 5l7 7-7 7"/>
-                  </svg>
-                </button>
-              </div>
-              <div class="control-row-compact">
-                <button 
-                  class="control-btn-compact backward" 
-                  @click="moveRobot('backward')" 
-                  :title="$t('screen.backward') + ' (S/↓)'"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 5v14M19 12l-7 7-7-7"/>
-                  </svg>
-                </button>
-                <button 
-                  class="control-btn-compact stop" 
-                  @click="moveRobot('stop')" 
-                  :title="$t('screen.stop') + ' (Space)'"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="6" y="6" width="12" height="12" rx="2"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div class="keyboard-hint">
-              <span>{{ $t('screen.keyboardHint') }}</span>
-            </div>
           </div>
         </div>
       </div>
@@ -277,19 +207,6 @@
                 </div>
               </div>
             </div>
-            <!-- 今日统计 -->
-            <div class="daily-stats">
-              <div class="log-section-title">{{ $t('screen.liveStream') }}</div>
-              <div class="stats-grid">
-                <div v-for="s in liveStats" :key="s.key" class="stat-box" :class="{ highlight: s.highlight }">
-                  <div class="stat-icon">{{ s.icon }}</div>
-                  <div class="stat-info">
-                    <div class="stat-label">{{ s.label }}</div>
-                    <div class="stat-value">{{ s.value }}<span class="unit">{{ s.unit }}</span></div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -299,26 +216,25 @@
 
 <script setup>
 /* eslint-disable vue/multi-word-component-names */
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import * as echarts from 'echarts/core';
 import { LineChart } from 'echarts/charts';
 import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
-import { rosState, subscribeTopic, publishTopic, connectRos } from '@/store/rosState';
+import { rosState, subscribeTopic, connectRos } from '@/store/rosState';
 import { useI18n } from 'vue-i18n';
 
 defineOptions({ name: 'DataScreen' }) // eslint-disable-line no-undef
 
 echarts.use([LineChart, GridComponent, TooltipComponent, LegendComponent, CanvasRenderer]);
 
-const { t, locale } = useI18n();
+const { t } = useI18n();
 const todayChart = ref(null);
 const realtimeLogList = ref(null);
 
 // ===== ROS 连接（使用全局共享连接）=====
 let waveListener = null;
 let stm32StatusListener = null;
-let stm32ResultListener = null;
 let clientCountListener = null;
 
 // ===== 真实数据状态 =====
@@ -333,12 +249,12 @@ const hasData = computed(() => rosState.connected && sensors.value.some(v => v >
 
 // ===== 设备状态总览（真实数据）=====
 const deviceItems = computed(() => [
-  { key: 'ros', icon: '🔌', name: t('screen.rosComm'), value: rosState.connected ? t('screen.online') : t('screen.offline'), stateClass: rosState.connected ? 'normal' : 'error' },
-  { key: 'stm32', icon: '🎛️', name: t('screen.stm32'), value: stm32Online.value ? t('screen.online') : t('screen.offline'), stateClass: stm32Online.value ? 'normal' : (rosState.connected ? 'warning' : 'error') },
-  { key: 'front', icon: '📡', name: t('screen.ultrasonicFront'), value: sensors.value[1] > 0 ? `${sensors.value[1]}mm` : t('screen.noData'), stateClass: sensors.value[1] > 0 && sensors.value[1] < 200 ? 'warning' : 'normal' },
-  { key: 'left', icon: '📡', name: t('screen.ultrasonicLeft'), value: sensors.value[0] > 0 ? `${sensors.value[0]}mm` : t('screen.noData'), stateClass: sensors.value[0] > 0 && sensors.value[0] < 200 ? 'warning' : 'normal' },
-  { key: 'right', icon: '📡', name: t('screen.ultrasonicRight'), value: sensors.value[2] > 0 ? `${sensors.value[2]}mm` : t('screen.noData'), stateClass: sensors.value[2] > 0 && sensors.value[2] < 200 ? 'warning' : 'normal' },
-  { key: 'clients', icon: '🖥️', name: t('screen.clients'), value: clientCount.value > 0 ? `${clientCount.value}` : t('screen.noData'), stateClass: 'normal' }
+  { key: 'ros', icon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="m7 20 10 0"/><path d="M12 16v4"/></svg>', name: t('screen.rosComm'), value: rosState.connected ? t('screen.online') : t('screen.offline'), stateClass: rosState.connected ? 'normal' : 'error' },
+  { key: 'stm32', icon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="8" rx="2"/><rect x="4" y="14" width="16" height="8" rx="2"/><path d="M2 6h.01"/><path d="M22 6h.01"/><path d="M2 18h.01"/><path d="M22 18h.01"/></svg>', name: t('screen.stm32'), value: stm32Online.value ? t('screen.online') : t('screen.offline'), stateClass: stm32Online.value ? 'normal' : (rosState.connected ? 'warning' : 'error') },
+  { key: 'front', icon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12 2 12"/><path d="M22 12a10 10 0 0 0-20 0"/><path d="M6 12a6 6 0 0 1 12 0"/><path d="M10 12a2 2 0 0 1 4 0"/></svg>', name: t('screen.ultrasonicFront'), value: sensors.value[1] > 0 ? `${sensors.value[1]}mm` : t('screen.noData'), stateClass: sensors.value[1] > 0 && sensors.value[1] < 200 ? 'warning' : 'normal' },
+  { key: 'left', icon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform: rotate(-90deg)"><path d="M22 12 2 12"/><path d="M22 12a10 10 0 0 0-20 0"/><path d="M6 12a6 6 0 0 1 12 0"/><path d="M10 12a2 2 0 0 1 4 0"/></svg>', name: t('screen.ultrasonicLeft'), value: sensors.value[0] > 0 ? `${sensors.value[0]}mm` : t('screen.noData'), stateClass: sensors.value[0] > 0 && sensors.value[0] < 200 ? 'warning' : 'normal' },
+  { key: 'right', icon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform: rotate(90deg)"><path d="M22 12 2 12"/><path d="M22 12a10 10 0 0 0-20 0"/><path d="M6 12a6 6 0 0 1 12 0"/><path d="M10 12a2 2 0 0 1 4 0"/></svg>', name: t('screen.ultrasonicRight'), value: sensors.value[2] > 0 ? `${sensors.value[2]}mm` : t('screen.noData'), stateClass: sensors.value[2] > 0 && sensors.value[2] < 200 ? 'warning' : 'normal' },
+  { key: 'clients', icon: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M8 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/><path d="m22 15-4-4-4 4"/></svg>', name: t('screen.clients'), value: clientCount.value > 0 ? `${clientCount.value}` : t('screen.noData'), stateClass: 'normal' }
 ]);
 
 // ===== 通信 / 故障 徽标 =====
@@ -346,16 +262,6 @@ const commStateClass = computed(() => rosState.connected ? 'normal' : 'error');
 const commStateText = computed(() => rosState.connected ? t('screen.online') : t('screen.offline'));
 const faultStateClass = computed(() => !rosState.connected ? 'error' : (stm32Online.value ? 'normal' : 'warning'));
 const faultStateText = computed(() => !rosState.connected ? t('screen.offline') : (stm32Online.value ? t('screen.noFault') : t('screen.offline')));
-
-// ===== 实时数据流统计（底部 6 格）=====
-const liveStats = computed(() => [
-  { key: 'front', icon: '📡', label: t('screen.ultrasonicFront'), value: sensors.value[1] > 0 ? `${sensors.value[1]}` : '--', unit: 'mm' },
-  { key: 'left', icon: '📡', label: t('screen.ultrasonicLeft'), value: sensors.value[0] > 0 ? `${sensors.value[0]}` : '--', unit: 'mm' },
-  { key: 'right', icon: '📡', label: t('screen.ultrasonicRight'), value: sensors.value[2] > 0 ? `${sensors.value[2]}` : '--', unit: 'mm' },
-  { key: 'stm32', icon: '🎛️', label: t('screen.stm32'), value: stm32Online.value ? t('screen.online') : t('screen.offline'), unit: '', stateClass: stm32Online.value ? 'normal' : 'warning' },
-  { key: 'clients', icon: '🖥️', label: t('screen.clients'), value: clientCount.value > 0 ? `${clientCount.value}` : '--', unit: '', stateClass: 'normal' },
-  { key: 'ros', icon: '🔌', label: t('screen.rosComm'), value: rosState.connected ? t('screen.online') : t('screen.offline'), unit: '', highlight: true }
-]);
 
 // ===== 设备工作日志（真实事件）=====
 const realtimeLogs = ref([]);
@@ -365,52 +271,6 @@ const addLog = (type, typeText, content) => {
   realtimeLogs.value.unshift({ time: now.toTimeString().slice(0, 8), type, typeText, content });
   if (realtimeLogs.value.length > 20) realtimeLogs.value.pop();
   if (realtimeLogList.value) realtimeLogList.value.scrollTop = 0;
-};
-
-// ===== 机器人控制（发布 /stm32_cmd，订阅 /stm32_result 反馈）=====
-const robotControlStatus = ref('idle');
-const robotControlStatusText = ref(t('screen.standby'));
-const CMD_MAP = { forward: 3, backward: 2, left: 4, right: 5, stop: 1 };
-
-const moveRobot = (direction) => {
-  if (!rosState.connected) {
-    robotControlStatus.value = 'idle';
-    robotControlStatusText.value = t('screen.offline');
-    return;
-  }
-  publishTopic('/stm32_cmd', 'std_msgs/Int32', { data: CMD_MAP[direction] });
-  if (direction === 'stop') {
-    robotControlStatus.value = 'idle';
-    robotControlStatusText.value = t('screen.stopped');
-  } else if (direction === 'left' || direction === 'right') {
-    robotControlStatus.value = 'turning';
-    robotControlStatusText.value = t(`screen.turning${direction.charAt(0).toUpperCase() + direction.slice(1)}`);
-  } else {
-    robotControlStatus.value = 'moving';
-    robotControlStatusText.value = t(`screen.moving${direction.charAt(0).toUpperCase() + direction.slice(1)}`);
-  }
-  addLog('info', 'CMD', t('screen.logMove', { cmd: t(`screen.${direction === 'left' ? 'turnLeft' : direction === 'right' ? 'turnRight' : direction}`) }));
-};
-
-const stopRobot = () => {
-  if (rosState.connected) moveRobot('stop');
-};
-
-const handleKeyDown = (event) => {
-  if (event.repeat) return;
-  const map = { ArrowUp: 'forward', w: 'forward', W: 'forward', ArrowDown: 'backward', s: 'backward', S: 'backward', ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right' };
-  if (map[event.key]) {
-    event.preventDefault();
-    moveRobot(map[event.key]);
-  } else if (event.key === ' ' || event.key === 'Space') {
-    event.preventDefault();
-    moveRobot('stop');
-  }
-};
-
-const handleKeyUp = (event) => {
-  const moveKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'W', 'a', 'A', 's', 'S', 'd', 'D'];
-  if (moveKeys.includes(event.key)) stopRobot();
 };
 
 // ===== 超声波实时趋势图（真实数据）=====
@@ -427,7 +287,7 @@ const initChart = () => {
     legend: { data: [t('radar.left'), t('radar.front'), t('radar.right')], textStyle: { color: '#8b9bb4', fontSize: 11 }, top: 5 },
     grid: { left: '5%', right: '5%', bottom: '5%', top: '20%', containLabel: true },
     xAxis: { type: 'category', data: chartLabels.value, axisLabel: { color: '#8b9bb4', fontSize: 10 }, axisLine: { lineStyle: { color: 'rgba(0,229,255,0.2)' } } },
-    yAxis: { type: 'value', name: 'mm', nameTextStyle: { color: '#8b9bb4' }, axisLabel: { color: '#8b9bb4' }, axisLine: { lineStyle: { color: 'rgba(0,229,255,0.2)' } }, splitLine: { lineStyle: { color: 'rgba(0,229,255,0.1)' } } },
+    yAxis: { type: 'log', logBase: 10, min: 10, max: 70000, name: 'mm', nameTextStyle: { color: '#8b9bb4' }, axisLabel: { color: '#8b9bb4', formatter: (v) => (v >= 1000 ? (v/1000) + 'k' : v) }, axisLine: { lineStyle: { color: 'rgba(0,229,255,0.2)' } }, splitLine: { lineStyle: { color: 'rgba(0,229,255,0.1)' } } },
     series: [
       { name: t('radar.left'), type: 'line', data: chartData.value[0], smooth: true, lineStyle: { width: 2 } },
       { name: t('radar.front'), type: 'line', data: chartData.value[1], smooth: true, lineStyle: { width: 2 } },
@@ -441,7 +301,8 @@ let chartInstance = null;
 const pushChartPoint = () => {
   if (hasData.value) {
     chartLabels.value.push(new Date().toTimeString().slice(0, 8));
-    for (let i = 0; i < 3; i++) chartData.value[i].push(sensors.value[i]);
+    // 对数轴不接受 0/负值，0 替换为 null（断点）
+    for (let i = 0; i < 3; i++) chartData.value[i].push(sensors.value[i] > 0 ? sensors.value[i] : null);
     if (chartLabels.value.length > MAX_POINTS) {
       chartLabels.value.shift();
       chartData.value.forEach(arr => arr.shift());
@@ -466,12 +327,6 @@ const subscribeTopics = () => {
     stm32Online.value = msg.data === 'online';
     if (stm32Online.value && !was) addLog('success', 'STM32', t('screen.logStm32On'));
     else if (!stm32Online.value && was) addLog('warning', 'STM32', t('screen.logStm32Off'));
-  });
-
-  // STM32 执行结果
-  stm32ResultListener = subscribeTopic('/stm32_result', 'std_msgs/String', (msg) => {
-    if (msg.data.startsWith('success')) addLog('success', 'OK', t('screen.logResultOk'));
-    else if (msg.data.startsWith('error')) addLog('error', 'ERR', t('screen.logResultErr'));
   });
 
   // 在线终端数
@@ -508,28 +363,19 @@ const processWave = (message) => {
 
 let lastSampleAt = 0;
 
-watch(locale, () => {
-  robotControlStatusText.value = robotControlStatus.value === 'idle' ? t('screen.standby') : robotControlStatusText.value;
-});
-
 onMounted(() => {
   chartInstance = initChart();
   connectRos();
   subscribeTopics();
   addLog('success', 'ROS', t('screen.logRosConnected'));
   window.addEventListener('resize', handleResize);
-  window.addEventListener('keydown', handleKeyDown);
-  window.addEventListener('keyup', handleKeyUp);
 });
 
 onUnmounted(() => {
   if (waveListener) { waveListener.unsubscribe(); waveListener = null; }
   if (stm32StatusListener) { stm32StatusListener.unsubscribe(); stm32StatusListener = null; }
-  if (stm32ResultListener) { stm32ResultListener.unsubscribe(); stm32ResultListener = null; }
   if (clientCountListener) { clientCountListener.unsubscribe(); clientCountListener = null; }
   window.removeEventListener('resize', handleResize);
-  window.removeEventListener('keydown', handleKeyDown);
-  window.removeEventListener('keyup', handleKeyUp);
   chartInstance?.dispose();
   chartInstance = null;
 });
@@ -698,29 +544,6 @@ onUnmounted(() => {
   height: auto;
 }
 
-.position-info {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  z-index: 3;
-  background: rgba(10,16,31,0.9);
-  border: 1px solid rgba(0,229,255,0.3);
-  border-radius: 4px;
-  padding: 8px 12px;
-  font-size: 0.6875rem;
-  color: #e6f7ff;
-}
-
-.coord-item {
-  margin: 2px 0;
-}
-
-.coord-value {
-  color: #00E5FF;
-  font-weight: 600;
-  font-family: monospace;
-}
-
 /* 机器人状态 */
 .robot-state {
   display: flex;
@@ -761,131 +584,6 @@ onUnmounted(() => {
   color: #FF3366;
 }
 
-/* 机器人控制面板 - 右侧卡片 */
-.control-card {
-  flex: 0.6;
-  outline: none;
-}
-
-.control-card:focus {
-  box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.3);
-}
-
-.control-header {
-  background: linear-gradient(90deg, rgba(0, 229, 255, 0.15) 0%, transparent 100%);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.control-status-badge {
-  font-size: 0.6875rem;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-weight: 600;
-}
-
-.control-status-badge.idle {
-  background: rgba(0, 255, 150, 0.2);
-  color: #00FF96;
-}
-
-.control-status-badge.moving {
-  background: rgba(0, 229, 255, 0.2);
-  color: #00E5FF;
-}
-
-.control-status-badge.turning {
-  background: rgba(255, 204, 0, 0.2);
-  color: #FFCC00;
-}
-
-.control-body {
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.control-grid-compact {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-
-.control-row-compact {
-  display: flex;
-  gap: 6px;
-  justify-content: center;
-}
-
-.control-btn-compact {
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 6px;
-  background: rgba(0, 229, 255, 0.1);
-  border: 1px solid rgba(0, 229, 255, 0.3);
-  color: #00E5FF;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-  outline: none;
-}
-
-.control-btn-compact:hover {
-  background: rgba(0, 229, 255, 0.25);
-  border-color: rgba(0, 229, 255, 0.6);
-  transform: scale(1.1);
-}
-
-.control-btn-compact:active {
-  transform: scale(0.95);
-}
-
-.control-btn-compact:focus {
-  outline: none;
-  box-shadow: none;
-}
-
-.control-btn-compact svg {
-  width: 16px;
-  height: 16px;
-}
-
-.control-btn-compact.forward {
-  background: rgba(0, 229, 255, 0.15);
-}
-
-.control-btn-compact.backward {
-  background: rgba(0, 229, 255, 0.15);
-}
-
-.control-btn-compact.stop {
-  background: rgba(255, 51, 102, 0.15);
-  border-color: rgba(255, 51, 102, 0.4);
-  color: #FF3366;
-}
-
-.control-btn-compact.stop:hover {
-  background: rgba(255, 51, 102, 0.25);
-  border-color: rgba(255, 51, 102, 0.6);
-}
-
-.keyboard-hint {
-  text-align: center;
-  font-size: 0.625rem;
-  color: #8b9bb4;
-  margin-top: 4px;
-}
-
-.keyboard-hint.disabled {
-  color: #5a6a7f;
-}
-
 /* 权限警告 */
 .permission-warning {
   display: flex;
@@ -903,21 +601,6 @@ onUnmounted(() => {
 
 .warning-icon {
   font-size: 0.875rem;
-}
-
-/* 禁用状态的控制按钮 */
-.control-grid-compact.disabled .control-btn-compact {
-  opacity: 0.4;
-  cursor: not-allowed;
-  background: rgba(90, 106, 127, 0.1);
-  border-color: rgba(90, 106, 127, 0.3);
-  color: #5a6a7f;
-}
-
-.control-grid-compact.disabled .control-btn-compact:hover {
-  transform: none;
-  background: rgba(90, 106, 127, 0.1);
-  border-color: rgba(90, 106, 127, 0.3);
 }
 
 /* 故障预警 */
@@ -1061,71 +744,6 @@ onUnmounted(() => {
   color: #e6f7ff;
 }
 
-/* 今日统计 */
-.daily-stats {
-  flex: 0.8;
-  display: flex;
-  flex-direction: column;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
-  border: 1px solid rgba(22, 93, 255, 0.15);
-}
-
-.stats-grid {
-  flex: 1;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  padding: 12px;
-  overflow-y: auto;
-}
-
-.stat-box {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px;
-  background: rgba(22, 93, 255, 0.05);
-  border-radius: 6px;
-  border: 1px solid rgba(22, 93, 255, 0.1);
-}
-
-.stat-box.highlight {
-  background: rgba(0, 229, 255, 0.1);
-  border-color: rgba(0, 229, 255, 0.3);
-}
-
-.stat-box .stat-icon {
-  font-size: 1.25rem;
-}
-
-.stat-box .stat-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-box .stat-label {
-  font-size: 0.6875rem;
-  color: #8b9bb4;
-  margin-bottom: 2px;
-}
-
-.stat-box .stat-value {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #00E5FF;
-}
-
-.stat-box.highlight .stat-value {
-  color: #00FF96;
-}
-
-.stat-box .unit {
-  font-size: 0.6875rem;
-  color: #8b9bb4;
-  margin-left: 2px;
-}
-
 /* 响应式 */
 @media (max-width: 1200px) {
   .content-area {
@@ -1161,9 +779,48 @@ onUnmounted(() => {
   .log-container {
     flex-direction: column;
   }
-  
-  .stats-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
+}
+
+/* ===== 统一数据展示增强 ===== */
+.badge-value {
+  font-family: 'Consolas', 'Monaco', monospace;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.3);
+}
+
+.alert-item {
+  transition: background 0.2s, transform 0.2s;
+}
+
+.alert-item:hover {
+  transform: translateX(2px);
+  background: rgba(255, 51, 102, 0.15);
+}
+
+.alert-item.none:hover {
+  background: rgba(0, 255, 150, 0.15);
+}
+
+.robot-state-value,
+.stat-value,
+.metric-value {
+  font-family: 'Consolas', 'Monaco', monospace;
+  color: #00E5FF;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.3);
+}
+
+/* 图表容器层次：柔和内衬 */
+.chart-container,
+.echart-container {
+  position: relative;
+}
+
+.chart-container::after,
+.echart-container::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: 6px;
+  box-shadow: inset 0 0 24px rgba(0, 229, 255, 0.04);
 }
 </style>

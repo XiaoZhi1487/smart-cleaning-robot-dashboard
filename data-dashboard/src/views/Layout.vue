@@ -9,7 +9,8 @@
           :aria-label="sidebarCollapsed ? $t('nav.expand') : $t('nav.collapse')"
           @click="toggleSidebar"
         >
-          {{ sidebarCollapsed ? '☰' : '◀' }}
+          <svg v-if="!sidebarCollapsed" class="icon-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          <svg v-else class="icon-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></svg>
         </button>
         <img src="@/assets/logo.png" alt="Logo" class="header-logo" v-if="false">
         <h1 class="header-title">{{ $t('app.title') }}</h1>
@@ -17,7 +18,7 @@
       
       <div class="header-right">
         <!-- 系统状态指示 -->
-        <span class="status-badge">🟢 {{ $t('app.running') }}</span>
+        <span class="status-badge"><svg class="icon-svg" viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg> {{ $t('app.running') }}</span>
 
         <!-- 语言切换 -->
         <div class="lang-switch">
@@ -48,7 +49,7 @@
             class="nav-item"
             :class="{ active: $route.path === route.path }"
           >
-            <span class="nav-icon">{{ route.meta.icon }}</span>
+            <span class="nav-icon" v-html="route.meta.icon"></span>
             <span class="nav-text">{{ $t(route.titleKey) }}</span>
           </router-link>
         </nav>
@@ -89,9 +90,9 @@
         <span class="status-item">
           <span class="status-dot" :class="{ active: rosState.connected }"></span>
           ROS:
-          <input v-model="rosIp" :disabled="rosState.connected" class="mini-input ip-input" spellcheck="false" />
+          <input v-model="rosIp" :disabled="rosState.connected" class="mini-input ip-input" spellcheck="false" @keyup.enter="toggleRos" />
           :
-          <input v-model="rosPort" :disabled="rosState.connected" class="mini-input port-input" spellcheck="false" />
+          <input v-model="rosPort" :disabled="rosState.connected" class="mini-input port-input" spellcheck="false" @keyup.enter="toggleRos" />
           <button class="mini-btn" :class="{ danger: rosState.connected }" @click="toggleRos">
             {{ rosState.connected ? $t('footer.disconnect') : $t('footer.connect') }}
           </button>
@@ -99,7 +100,7 @@
         <span class="status-item">
           <span class="status-dot" :class="{ active: rosState.connected }"></span>
           CAM:
-          <input v-model="cameraIp" class="mini-input cam-input" spellcheck="false" @change="applyCamera" />
+          <input v-model="cameraIp" class="mini-input cam-input" spellcheck="false" @change="applyCamera" @keyup.enter="applyCamera" />
           <button class="mini-btn" :class="{ active: videoSource === 'python' }" @click="toggleVideoSource">
             {{ $t('footer.toggle') }}: {{ videoSource === 'ros' ? 'ROS2' : 'Python' }}
           </button>
@@ -238,11 +239,25 @@ onMounted(() => {
   height: 60px;
   background: linear-gradient(90deg, rgba(10, 16, 31, 0.95) 0%, rgba(22, 93, 255, 0.1) 100%);
   border-bottom: 1px solid rgba(0, 229, 255, 0.2);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
   flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+
+/* 顶部导航底部发光线条 */
+.layout-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.5), transparent);
 }
 
 .header-left {
@@ -355,7 +370,8 @@ onMounted(() => {
 /* 左侧边栏 */
 .layout-sidebar {
   width: 220px;
-  background: rgba(10, 16, 31, 0.8);
+  background:
+    linear-gradient(180deg, rgba(13, 20, 33, 0.9), rgba(10, 16, 31, 0.8));
   border-right: 1px solid rgba(0, 229, 255, 0.1);
   display: flex;
   flex-direction: column;
@@ -382,24 +398,34 @@ onMounted(() => {
   gap: 12px;
   padding: 12px 20px;
   margin: 4px 12px;
-  border-radius: 6px;
+  border-radius: 8px;
   color: #8b9bb4;
   text-decoration: none;
   transition: all 0.3s;
   cursor: pointer;
   min-width: 0;
+  position: relative;
 }
 
 .nav-item:hover {
-  background: rgba(0, 229, 255, 0.05);
+  background: rgba(0, 229, 255, 0.06);
   color: #e6f7ff;
 }
 
 .nav-item.active {
-  background: rgba(0, 229, 255, 0.1);
+  background: linear-gradient(90deg, rgba(0, 229, 255, 0.12), rgba(0, 229, 255, 0.03));
   color: #00E5FF;
   border-left: 3px solid #00E5FF;
   margin-left: 9px;
+  box-shadow: inset 0 0 12px rgba(0, 229, 255, 0.08);
+}
+
+.nav-item.active .nav-icon {
+  filter: drop-shadow(0 0 6px rgba(0, 229, 255, 0.6));
+}
+
+.nav-item:active {
+  transform: scale(0.98);
 }
 
 .nav-icon {
@@ -465,6 +491,17 @@ onMounted(() => {
   justify-content: space-between;
   padding: 0 24px;
   flex-shrink: 0;
+  position: relative;
+}
+
+.layout-footer::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.4), transparent);
 }
 
 .footer-left {
@@ -502,6 +539,15 @@ onMounted(() => {
   box-shadow: 0 0 6px rgba(0, 255, 150, 0.6);
 }
 
+.status-dot.active.pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 4px rgba(0, 255, 150, 0.4); }
+  50% { box-shadow: 0 0 10px rgba(0, 255, 150, 0.9); }
+}
+
 /* 左下角连接设置：紧凑输入与按钮 */
 .mini-input {
   background: rgba(0, 0, 0, 0.3);
@@ -511,6 +557,17 @@ onMounted(() => {
   font-size: 0.6875rem;
   padding: 2px 6px;
   width: 92px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.mini-input:focus {
+  outline: none;
+  border-color: rgba(0, 229, 255, 0.6);
+  box-shadow: 0 0 6px rgba(0, 229, 255, 0.25);
+}
+
+.mini-input::placeholder {
+  color: #5a6a7f;
 }
 
 .mini-input.port-input {
@@ -531,11 +588,27 @@ onMounted(() => {
   font-size: 0.6875rem;
   cursor: pointer;
   white-space: nowrap;
+  transition: all 0.2s;
 }
 
 .mini-btn:hover {
   background: rgba(0, 229, 255, 0.3);
+  border-color: rgba(0, 229, 255, 0.7);
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.3);
 }
+
+.mini-btn:active {
+  transform: scale(0.96);
+}
+
+.mini-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* 折叠按钮 */
 
 .mini-btn.danger {
   border-color: rgba(255, 51, 102, 0.4);

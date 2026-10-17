@@ -26,7 +26,10 @@ html, body {
   width: 100%;
   height: 100%;
   font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
-  background: #0a101f;
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(22, 93, 255, 0.12), transparent 60%),
+    radial-gradient(900px 500px at 0% 110%, rgba(0, 229, 255, 0.08), transparent 60%),
+    #0a101f;
   color: #e6f7ff;
   overflow: hidden;
 }
@@ -52,7 +55,16 @@ html, body {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 229, 255, 0.5);
+  background: rgba(0, 229, 255, 0.6);
+}
+
+/* 数字/数据等宽字体，提升数据可读性 */
+.num,
+.stat-value,
+.coord-value,
+.log-time,
+.metric-value {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
 }
 
 /* 页面切换动画 */
@@ -98,10 +110,19 @@ html, body {
 
 /* 通用卡片样式 */
 .card {
-  background: rgba(10, 16, 31, 0.8);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 30%),
+    rgba(10, 16, 31, 0.8);
   border: 1px solid rgba(0, 229, 255, 0.2);
   border-radius: 8px;
   padding: 16px;
+}
+
+/* 统一表单控件（输入框/下拉/数字） */
+input,
+select,
+textarea {
+  font-family: inherit;
 }
 
 /* 禁用状态 */

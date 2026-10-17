@@ -19,6 +19,7 @@ os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
 
 import argparse
 import io
+import logging
 import os
 import time
 import threading
@@ -27,6 +28,9 @@ import urllib.request
 import cv2
 import numpy as np
 from flask import Flask, Response, jsonify
+
+# 抑制 Flask 每帧访问日志(GET /camera 200 会刷屏),仅保留 ERROR 级别
+logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
 # ===== 配置 =====
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
