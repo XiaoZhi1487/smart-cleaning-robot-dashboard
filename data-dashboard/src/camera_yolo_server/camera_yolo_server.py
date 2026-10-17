@@ -70,7 +70,7 @@ DEVICE = _pick_device()
 IMGSZ = ARGS.imgsz or None     # None = 用模型默认 imgsz
 
 # 检测置信度阈值
-CONF_THRESHOLD = 0.78
+CONF_THRESHOLD = 0.6
 # 每帧处理的 JPEG 质量(0-100)
 JPEG_QUALITY = 80
 
@@ -100,6 +100,19 @@ def load_model():
         print(f"[ERROR] 模型加载失败: {e}")
 
 
+def draw_status_overlay(frame):
+    """在画面左上角叠加'YOLO11N 识别中'字样,便于确认检测服务是否在运行"""
+    h, w = frame.shape[:2]
+    # 半透明黑底条,保证文字在任何画面上都清晰可读
+    bar_w, bar_h = min(300, w), 36
+    overlay = frame.copy()
+    cv2.rectangle(overlay, (0, 0), (bar_w, bar_h), (0, 0, 0), -1)
+    cv2.addWeighted(overlay, 0.55, frame, 0.45, 0, frame)
+    cv2.putText(frame, "YOLO11N 识别中", (10, bar_h - 12), cv2.FONT_HERSHEY_SIMPLEX,
+                0.85, (0, 255, 0), 2, cv2.LINE_AA)
+    return frame
+
+
 def process_jpeg(jpg_bytes):
     """对单个 JPEG 帧做检测标注并更新最新标注帧"""
     global _latest_jpg
@@ -119,6 +132,9 @@ def process_jpeg(jpg_bytes):
             annotated = frame
     else:
         annotated = frame
+
+    # 叠加左上角状态标签(始终显示,用于确认识别服务状态)
+    annotated = draw_status_overlay(annotated)
 
     ok_jpg, buf = cv2.imencode(".jpg", annotated, [cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY])
     if ok_jpg:
