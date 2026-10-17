@@ -591,7 +591,6 @@ const subscribeToTopic = () => {
   })
   
   stm32ResultTopic.value.subscribe((msg) => {
-    console.log('STM32 Result:', msg.data)
     if (msg.data.startsWith('success')) {
       addStm32Log(`✅ ${msg.data}`)
     } else if (msg.data.startsWith('error')) {
@@ -861,40 +860,7 @@ const getSensorStatusText = (sensor) => {
   max-width: 360px;
 }
 
-/* ===== 卡片样式 ===== */
-.card {
-  background: rgba(10, 16, 31, 0.8);
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid rgba(22, 93, 255, 0.2);
-  display: flex;
-  flex-direction: column;
-}
-
-.card-header {
-  min-height: 34px;
-  display: flex;
-  align-items: center;
-  padding: 0 12px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #00E5FF;
-  background: rgba(22, 93, 255, 0.1);
-  border-bottom: 1px solid rgba(22, 93, 255, 0.2);
-}
-
-.card-title {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #00E5FF;
-}
-
-.card-body {
-  padding: 14px;
-  flex: 1;
-  overflow: auto;
-}
-
+/* ===== 卡片样式（基础 .card/.card-header/.card-title/.card-body 已上提 common.css） ===== */
 /* ===== 传感器网格 - 3个传感器 ===== */
 .sensor-grid {
   display: grid;

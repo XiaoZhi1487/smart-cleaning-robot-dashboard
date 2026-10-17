@@ -367,15 +367,18 @@
   </div>
 </template>
 
-<script>
+<script setup>
+/* eslint-disable vue/multi-word-component-names */
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import * as echarts from 'echarts/core';
 import { BarChart, LineChart } from 'echarts/charts';
 import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 import { LegacyGridContainLabel } from 'echarts/features';
-import { formatNum, getStateClass } from '@/utils';
+import { getStateClass } from '@/utils';
 import { useI18n } from 'vue-i18n';
+
+defineOptions({ name: 'DataScreen' }) // eslint-disable-line no-undef
 
 echarts.use([BarChart, LineChart, GridComponent, TooltipComponent, LegendComponent, CanvasRenderer, LegacyGridContainLabel]);
 
@@ -415,18 +418,15 @@ const requestMock = (key) => {
   });
 };
 
-export default {
-  name: 'DataScreen',
-  setup() {
-    const { t, locale } = useI18n();
-    const todayChart = ref(null);
-    const realtimeLogList = ref(null);
-    
-    let todayChartInstance = null;
-    let refreshTimer = null;
-    let logTimer = null;
+const { t, locale } = useI18n();
+const todayChart = ref(null);
+const realtimeLogList = ref(null);
 
-    const realTimeData = ref({
+let todayChartInstance = null;
+let refreshTimer = null;
+let logTimer = null;
+
+const realTimeData = ref({
       connect: "正常",
       fault: "无",
       cleanArea: 128.6,
@@ -465,8 +465,6 @@ export default {
 
     // 机器人控制方法 - 点击执行，不点击立即停止
     const moveRobot = (direction) => {
-      console.log(`机器人移动: ${direction}`);
-      
       switch(direction) {
         case 'forward':
           robotControlStatus.value = 'moving';
@@ -709,25 +707,6 @@ export default {
       window.removeEventListener('resize', handleResize);
       todayChartInstance?.dispose();
     });
-
-    return {
-      todayChart,
-      realtimeLogList,
-      realTimeData,
-      faultList,
-      realtimeLogs,
-      dailyStats,
-      formatNum,
-      getStateClass,
-      robotControlStatus,
-      robotControlStatusText,
-      moveRobot,
-      stopRobot,
-      handleKeyDown,
-      handleKeyUp
-    };
-  }
-};
 </script>
 
 <style scoped>
@@ -786,54 +765,10 @@ export default {
   gap: 12px;
 }
 
-/* 卡片样式 */
-.card {
-  background: rgba(10, 16, 31, 0.8);
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid rgba(22, 93, 255, 0.2);
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-}
-
+/* 卡片样式（基础 .card/.card-header/.card-title/.card-body 已上提 common.css） */
 .main-card {
   flex: 1;
 }
-
-.card-header {
-  min-height: 36px;
-  display: flex;
-  align-items: center;
-  padding: 0 12px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: #00E5FF;
-  background: rgba(0, 229, 255, 0.1);
-  border-bottom: 1px solid rgba(0, 229, 255, 0.2);
-  flex-shrink: 0;
-}
-
-.alert-header {
-  background: rgba(255, 51, 102, 0.1);
-  border-bottom-color: rgba(255, 51, 102, 0.3);
-}
-
-.card-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.card-body {
-  flex: 1;
-  padding: 12px;
-  overflow: auto;
-  min-height: 0;
-}
-
-/* 图表容器 */
 .chart-container {
   width: 100%;
   height: 200px;

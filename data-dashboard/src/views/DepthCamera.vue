@@ -592,45 +592,7 @@ const subscribeToTopics = () => {
   gap: 16px;
 }
 
-/* 卡片样式 */
-.card {
-  background: rgba(10, 16, 31, 0.8);
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid rgba(22, 93, 255, 0.2);
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-}
-
-.card-header {
-  min-height: 36px;
-  display: flex;
-  align-items: center;
-  padding: 0 12px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: #00E5FF;
-  background: rgba(22, 93, 255, 0.1);
-  border-bottom: 1px solid rgba(22, 93, 255, 0.2);
-  flex-shrink: 0;
-}
-
-.card-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.card-body {
-  flex: 1;
-  padding: 12px;
-  overflow: auto;
-  min-height: 0;
-}
-
-/* 图像容器 */
+/* 卡片样式（基础 .card/.card-header/.card-title/.card-body 已上提 common.css） */
 .image-body {
   padding: 12px;
   display: flex;
