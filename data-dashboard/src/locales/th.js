@@ -21,6 +21,9 @@ export default {
     status: 'สถานะ',
     connected: 'เชื่อมต่อแล้ว',
     disconnected: 'ไม่ได้เชื่อมต่อ',
+    connect: 'เชื่อมต่อ',
+    disconnect: 'ตัดการเชื่อมต่อ',
+    apply: 'ใช้',
     copyright: '© 2026 ระบบตรวจสอบหุ่นยนต์ทำความสะอาดอัจฉริยะ'
   },
   radar: {

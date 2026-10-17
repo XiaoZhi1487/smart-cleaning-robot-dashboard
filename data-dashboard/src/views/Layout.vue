@@ -83,12 +83,24 @@
       </main>
     </div>
     
-    <!-- 底部状态栏 -->
+    <!-- 底部状态栏（左下角连接设置） -->
     <footer class="layout-footer">
       <div class="footer-left">
         <span class="status-item">
           <span class="status-dot" :class="{ active: rosState.connected }"></span>
-          ROS: {{ rosState.url }}
+          ROS:
+          <input v-model="rosIp" :disabled="rosState.connected" class="mini-input ip-input" spellcheck="false" />
+          :
+          <input v-model="rosPort" :disabled="rosState.connected" class="mini-input port-input" spellcheck="false" />
+          <button class="mini-btn" :class="{ danger: rosState.connected }" @click="toggleRos">
+            {{ rosState.connected ? $t('footer.disconnect') : $t('footer.connect') }}
+          </button>
+        </span>
+        <span class="status-item">
+          <span class="status-dot" :class="{ active: rosState.connected }"></span>
+          CAM:
+          <input v-model="cameraIp" class="mini-input ip-input" spellcheck="false" @change="applyCamera" />
+          <button class="mini-btn" @click="applyCamera">{{ $t('footer.apply') }}</button>
         </span>
         <span class="status-item">
           <span class="status-dot" :class="{ active: rosState.connected }"></span>
@@ -112,10 +124,39 @@ export default {
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { rosState } from '@/store/rosState'
+import { rosState, connectRos, disconnectRos, updateRosState, updateCameraUrl } from '@/store/rosState'
 
 const router = useRouter()
 const { t, locale } = useI18n()
+
+// 底部连接设置：ROS 服务器（拆分为 IP + 端口）
+const rosIp = ref('192.168.0.2')
+const rosPort = ref('9090')
+// 相机（YOLO 带标注流）地址
+const cameraIp = ref('http://localhost:8083/camera')
+
+const parseRosUrl = () => {
+  const m = rosState.url.match(/^ws:\/\/([^:]+):(\d+)/)
+  if (m) {
+    rosIp.value = m[1]
+    rosPort.value = m[2]
+  }
+}
+
+// 切换 ROS 连接
+const toggleRos = () => {
+  if (rosState.connected) {
+    disconnectRos()
+  } else {
+    updateRosState(`ws://${rosIp.value}:${rosPort.value}`, false)
+    connectRos()
+  }
+}
+
+// 应用相机流地址
+const applyCamera = () => {
+  updateCameraUrl(cameraIp.value.trim())
+}
 
 // 侧边栏折叠状态
 const sidebarCollapsed = ref(false)
@@ -163,7 +204,10 @@ const accessibleRoutes = computed(() => {
 })
 
 onMounted(() => {
-  // 可以在这里检查 ROS 连接状态
+  parseRosUrl()
+  cameraIp.value = rosState.cameraUrl
+  // 页面挂载时自动建立 ROS 连接（左下角状态栏统一管理）
+  connectRos()
 })
 </script>
 
@@ -444,6 +488,41 @@ onMounted(() => {
 .status-dot.active {
   background: #00FF96;
   box-shadow: 0 0 6px rgba(0, 255, 150, 0.6);
+}
+
+/* 左下角连接设置：紧凑输入与按钮 */
+.mini-input {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(22, 93, 255, 0.3);
+  border-radius: 3px;
+  color: #e6f7ff;
+  font-size: 0.6875rem;
+  padding: 2px 6px;
+  width: 92px;
+}
+
+.mini-input.port-input {
+  width: 52px;
+}
+
+.mini-btn {
+  background: rgba(0, 229, 255, 0.15);
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  color: #00E5FF;
+  border-radius: 3px;
+  padding: 2px 8px;
+  font-size: 0.6875rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.mini-btn:hover {
+  background: rgba(0, 229, 255, 0.3);
+}
+
+.mini-btn.danger {
+  border-color: rgba(255, 51, 102, 0.4);
+  color: #FF3366;
 }
 
 /* 页面切换动画 */

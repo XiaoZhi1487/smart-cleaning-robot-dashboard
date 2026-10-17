@@ -145,16 +145,15 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-import ROSLIB from 'roslib'
 import { useI18n } from 'vue-i18n'
-import { rosState, updateRosState } from '@/store/rosState'
+import { rosState, subscribeTopic, connectRos } from '@/store/rosState'
 
 const { t } = useI18n()
 
-// ===== 工业相机（MJPEG 视频流）=====
+// ===== 工业相机（MJPEG 视频流，地址来自底部状态栏设置）=====
 const cameraConnected = ref(false)
 const cameraError = ref('')
-const cameraUrl = ref('http://localhost:8083/camera')
+const cameraUrl = ref(rosState.cameraUrl)
 const cameraRetryCount = ref(0)
 const maxRetries = 3
 
@@ -171,9 +170,7 @@ const depthFilterOk = computed(() => depthFilterStatus.value === 'active' || dep
 const deviceStatus = ref('--')
 const deviceOk = computed(() => cameraConnected.value && /ok|online|normal/i.test(deviceStatus.value))
 
-// ===== ROS 连接 =====
-const isConnected = ref(false)
-const ros = ref(null)
+// 订阅句柄
 let cameraInfoListener = null
 let depthFilterListener = null
 let deviceStatusListener = null
@@ -191,12 +188,16 @@ const cameraStatus = computed(() => {
 // ===== 生命周期 =====
 onMounted(() => {
   window.addEventListener('resize', handleResize)
-  connectROS()
+  connectRos()
+  subscribeToTopics()
+  addLogEntry(t('camera.rosConnected'))
 })
 
 onUnmounted(() => {
   if (cameraRetryTimer) clearTimeout(cameraRetryTimer)
-  disconnectROS()
+  if (cameraInfoListener) { cameraInfoListener.unsubscribe(); cameraInfoListener = null }
+  if (depthFilterListener) { depthFilterListener.unsubscribe(); depthFilterListener = null }
+  if (deviceStatusListener) { deviceStatusListener.unsubscribe(); deviceStatusListener = null }
   window.removeEventListener('resize', handleResize)
 })
 
@@ -213,7 +214,7 @@ const onCameraError = () => {
     addLogEntry(t('camera.loadRetry', { count: cameraRetryCount.value, max: maxRetries }))
     // 添加时间戳防止缓存
     cameraRetryTimer = setTimeout(() => {
-      cameraUrl.value = `http://localhost:8083/camera?t=${Date.now()}`
+      cameraUrl.value = `${rosState.cameraUrl}?t=${Date.now()}`
     }, 1000)
   } else {
     cameraConnected.value = false
@@ -230,54 +231,10 @@ const onCameraLoad = () => {
   addLogEntry(t('camera.loadSuccess'))
 }
 
-// ===== ROS 连接（自动连接，复用全局保存的地址）=====
-const connectROS = () => {
-  if (isConnected.value) return
-
-  const url = rosState.url
-  ros.value = new ROSLIB.Ros({ url })
-
-  ros.value.on('connection', () => {
-    isConnected.value = true
-    updateRosState(url, true)
-    addLogEntry(t('camera.rosConnected'))
-    subscribeToTopics()
-  })
-  ros.value.on('error', (error) => {
-    console.error('ROS Connection Error:', error)
-    addLogEntry(t('radar.connFail', { error }))
-  })
-  ros.value.on('close', () => {
-    isConnected.value = false
-    cameraConnected.value = false
-    updateRosState(null, false)
-    addLogEntry(t('camera.rosClosed'))
-  })
-}
-
-const disconnectROS = () => {
-  if (cameraInfoListener) { cameraInfoListener.unsubscribe(); cameraInfoListener = null }
-  if (depthFilterListener) { depthFilterListener.unsubscribe(); depthFilterListener = null }
-  if (deviceStatusListener) { deviceStatusListener.unsubscribe(); deviceStatusListener = null }
-
-  if (ros.value) {
-    ros.value.close()
-    ros.value = null
-  }
-
-  isConnected.value = false
-  updateRosState(null, false)
-}
-
-// ===== 订阅真实相机话题 =====
+// ===== 订阅真实相机话题（使用全局共享连接）=====
 const subscribeToTopics = () => {
   // 相机内参：分辨率与消息时间戳（用于实时帧率）
-  cameraInfoListener = new ROSLIB.Topic({
-    ros: ros.value,
-    name: '/camera/color/camera_info',
-    messageType: 'sensor_msgs/CameraInfo'
-  })
-  cameraInfoListener.subscribe((msg) => {
+  cameraInfoListener = subscribeTopic('/camera/color/camera_info', 'sensor_msgs/CameraInfo', (msg) => {
     if (msg.width && msg.height) {
       resolution.value = `${msg.width} x ${msg.height}`
     }
@@ -285,22 +242,12 @@ const subscribeToTopics = () => {
   })
 
   // 深度滤波状态
-  depthFilterListener = new ROSLIB.Topic({
-    ros: ros.value,
-    name: '/camera/depth_filter_status',
-    messageType: 'std_msgs/String'
-  })
-  depthFilterListener.subscribe((msg) => {
+  depthFilterListener = subscribeTopic('/camera/depth_filter_status', 'std_msgs/String', (msg) => {
     depthFilterStatus.value = msg.data
   })
 
   // 相机设备状态
-  deviceStatusListener = new ROSLIB.Topic({
-    ros: ros.value,
-    name: '/camera/device_status',
-    messageType: 'orbbec_camera_msgs/DeviceStatus'
-  })
-  deviceStatusListener.subscribe((msg) => {
+  deviceStatusListener = subscribeTopic('/camera/device_status', 'orbbec_camera_msgs/DeviceStatus', (msg) => {
     const raw = msg && msg.data ? msg.data : JSON.stringify(msg || {})
     deviceStatus.value = typeof raw === 'string' ? raw : String(raw)
   })

@@ -20,7 +20,10 @@ export default {
   footer: {
     status: '状态',
     connected: '已连接',
-    disconnected: '已连接',
+    disconnected: '未连接',
+    connect: '连接',
+    disconnect: '断开',
+    apply: '应用',
     copyright: '© 2026 智能清洁机器人监控系统'
   },
   radar: {

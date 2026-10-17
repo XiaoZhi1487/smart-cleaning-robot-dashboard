@@ -6,7 +6,7 @@ os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
 """
 工业相机 MJPEG 视频流 YOLO 目标检测服务
 =======================================
-读取原始相机视频流(http://192.168.0.3:8082/camera)
+读取原始相机视频流(http://192.168.0.2:8082/camera)
 使用 tesch_yolo_server.pt 逐帧做目标检测并绘制标注框
 输出带标注的 MJPEG 流,供前端 <img> 显示(替换原始无标注画面)
 
@@ -34,7 +34,7 @@ _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def _parse_args():
     parser = argparse.ArgumentParser(description="工业相机 MJPEG 视频流 YOLO 标注服务")
-    parser.add_argument("--camera", default="http://192.168.0.3:8082/camera",
+    parser.add_argument("--camera", default="http://192.168.0.2:8082/camera",
                         help="原始相机 MJPEG 流地址(在相机所在设备上运行可填 http://127.0.0.1:8082/camera)")
     parser.add_argument("--port", type=int, default=8083,
                         help="带标注流服务端口(默认 8083)")

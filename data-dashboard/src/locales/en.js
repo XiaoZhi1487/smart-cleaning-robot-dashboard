@@ -21,6 +21,9 @@ export default {
     status: 'Status',
     connected: 'Connected',
     disconnected: 'Disconnected',
+    connect: 'Connect',
+    disconnect: 'Disconnect',
+    apply: 'Apply',
     copyright: '© 2026 Smart Cleaning Robot Monitoring System'
   },
   radar: {

@@ -4,23 +4,8 @@
     <div class="page-header">
       <h1 class="page-title">📡 {{ $t('radar.pageTitle') }}</h1>
     </div>
-    
-    <!-- 连接状态面板 -->
-    <div class="connection-panel">
-      <div class="status-group">
-        <div class="status-dot" :class="{ connected: isConnected }"></div>
-        <span class="status-text">{{ connectionStatus }}</span>
-      </div>
-      
-      <div class="config-group">
-        <label>{{ $t('radar.deviceIp') }}</label>
-        <input v-model="serverIp" :disabled="isConnected" class="server-input" placeholder="192.168.0.3" />
-        <label>{{ $t('radar.port') }}</label>
-        <input v-model="serverPort" :disabled="isConnected" class="port-input" placeholder="9090" />
-        <button @click="connectROS" :disabled="isConnected" class="btn btn-connect">{{ $t('radar.connect') }}</button>
-        <button @click="disconnectROS" :disabled="!isConnected" class="btn btn-disconnect">{{ $t('radar.disconnect') }}</button>
-      </div>
-    </div>
+
+    <!-- 连接设置已移至左下角状态栏统一管理 -->
 
     <div class="content-area">
       <div class="left-section">
@@ -174,20 +159,15 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
-import ROSLIB from 'roslib'
 import { useI18n } from 'vue-i18n'
-import { updateRosState } from '@/store/rosState'
+import { rosState, subscribeTopic, publishTopic, connectRos } from '@/store/rosState'
 
 const { t, locale } = useI18n()
 
 // 语言切换后重绘雷达方向标签
 watch(locale, () => renderRadar())
 
-// ===== 配置区域 =====
-const serverIp = ref('192.168.0.3')
-const serverPort = ref('9090')
-const isConnected = ref(false)
-const ros = ref(null)
+// ===== 配置区域（连接地址由左下角状态栏统一管理）=====
 const waveLengthListener = ref(null)
 const radarCanvas = ref(null)
 let canvasCtx = null
@@ -216,10 +196,9 @@ const currentCommand = computed(() => {
   return currentCommandKey.value ? t(CMD_LABEL_KEYS[currentCommandKey.value]) : t('radar.standby')
 })
 
-// ROS 话题
-const stm32CmdTopic = ref(null)
-const stm32ResultTopic = ref(null)
-const stm32StatusTopic = ref(null)
+// ROS 话题句柄（使用全局共享连接）
+let stm32ResultTopic = null
+let stm32StatusTopic = null
 
 // 指令映射：命令名 -> Int32 值
 const CMD_MAP = {
@@ -260,7 +239,7 @@ const addStm32Log = (message, isError = false) => {
 
 // 发送 STM32 控制指令（ROS 话题方式）
 const sendStm32Cmd = (command) => {
-  if (!isConnected.value || !stm32CmdTopic.value) {
+  if (!rosState.connected) {
     addStm32Log(t('radar.notConnectedLog'), true)
     return
   }
@@ -271,7 +250,7 @@ const sendStm32Cmd = (command) => {
     return
   }
   
-  stm32CmdTopic.value.publish(new ROSLIB.Message({ data: cmdValue }))
+  publishTopic('/stm32_cmd', 'std_msgs/Int32', { data: cmdValue })
   const cmdName = t(CMD_LABEL_KEYS[command] || 'radar.stop')
   addStm32Log(t('radar.sendLog', { cmd: cmdName, value: cmdValue }))
   currentCommandKey.value = command
@@ -347,22 +326,20 @@ const rawDataHex = computed(() => {
 // 原始数据长度
 const rawDataLength = computed(() => rawData.value ? rawData.value.length : 0)
 
-// 连接状态文本
-const connectionStatus = computed(() => {
-  if (isConnected.value) return t('radar.connected')
-  return t('radar.notConnected')
-})
-
 // ===== 生命周期钩子 =====
 onMounted(() => {
   initCanvas()
+  connectRos()
+  subscribeToTopic()
   window.addEventListener('resize', resizeCanvas)
   window.addEventListener('keydown', handleKeyDown)
   window.addEventListener('keyup', handleKeyUp)
 })
 
 onUnmounted(() => {
-  disconnectROS()
+  if (waveLengthListener.value) { waveLengthListener.value.unsubscribe(); waveLengthListener.value = null }
+  if (stm32ResultTopic) { stm32ResultTopic.unsubscribe(); stm32ResultTopic = null }
+  if (stm32StatusTopic) { stm32StatusTopic.unsubscribe(); stm32StatusTopic = null }
   window.removeEventListener('resize', resizeCanvas)
   window.removeEventListener('keydown', handleKeyDown)
   window.removeEventListener('keyup', handleKeyUp)
@@ -499,117 +476,24 @@ const renderRadar = () => {
   ctx.fill()
 }
 
-// ===== 【演示代码2】ROS 2 桥接连接 =====
-// 使用 WebSocket 建立与 ROS 2 系统的连接
-// 通过 rosbridge_server 将 ROS 话题数据转发到前端
-const connectROS = () => {
-  // 防止重复连接
-  if (isConnected.value) return
-  
-  const url = `ws://${serverIp.value}:${serverPort.value}`
-  ros.value = new ROSLIB.Ros({ url })
-  
-  // 连接成功回调
-  ros.value.on('connection', () => {
-    console.log('✅ Connected to ROS 2 bridge')
-    isConnected.value = true
-    updateRosState(url, true)
-    subscribeToTopic()
-  })
-  
-  // 连接错误回调
-  ros.value.on('error', (error) => {
-    console.error('❌ ROS Connection Error:', error)
-    alert(t('radar.connFail', { error }))
-  })
-  
-  // 连接关闭回调
-  ros.value.on('close', () => {
-    console.log('🔌 ROS Connection Closed')
-    isConnected.value = false
-    updateRosState(null, false)
-  })
-}
-
-// 断开 ROS 连接并清理资源
-const disconnectROS = () => {
-  // 清理超声波话题
-  if (waveLengthListener.value) {
-    waveLengthListener.value.unsubscribe()
-    waveLengthListener.value = null
-  }
-  
-  // 清理 STM32 话题
-  if (stm32ResultTopic.value) {
-    stm32ResultTopic.value.unsubscribe()
-    stm32ResultTopic.value = null
-  }
-  if (stm32StatusTopic.value) {
-    stm32StatusTopic.value.unsubscribe()
-    stm32StatusTopic.value = null
-  }
-  
-  stm32CmdTopic.value = null
-  
-  if (ros.value) {
-    ros.value.close()
-    ros.value = null
-  }
-  
-  isConnected.value = false
-  stm32Connected.value = false
-  updateRosState(null, false)
-  
-  // 重置传感器数据
-  sensors.value.forEach(s => s.distance = 0)
-}
-
-// 订阅 ROS 话题 /wave_length，接收超声波传感器数据
+// 订阅 ROS 话题 /wave_length（使用全局共享连接）
 const subscribeToTopic = () => {
-  waveLengthListener.value = new ROSLIB.Topic({
-    ros: ros.value,
-    name: '/wave_length',
-    messageType: 'std_msgs/UInt8MultiArray'
-  })
-  
-  waveLengthListener.value.subscribe(processSensorData)
-  
-  // ===== STM32 控制话题 =====
-  
-  // 发布控制指令
-  stm32CmdTopic.value = new ROSLIB.Topic({
-    ros: ros.value,
-    name: '/stm32_cmd',
-    messageType: 'std_msgs/Int32'
-  })
-  
+  waveLengthListener.value = subscribeTopic('/wave_length', 'std_msgs/UInt8MultiArray', processSensorData)
+
   // 订阅执行结果
-  stm32ResultTopic.value = new ROSLIB.Topic({
-    ros: ros.value,
-    name: '/stm32_result',
-    messageType: 'std_msgs/String'
-  })
-  
-  stm32ResultTopic.value.subscribe((msg) => {
+  stm32ResultTopic = subscribeTopic('/stm32_result', 'std_msgs/String', (msg) => {
     if (msg.data.startsWith('success')) {
       addStm32Log(`✅ ${msg.data}`)
     } else if (msg.data.startsWith('error')) {
       addStm32Log(`❌ ${msg.data}`, true)
-      
     }
   })
-  
+
   // 订阅 STM32 状态（1Hz 心跳）
-  stm32StatusTopic.value = new ROSLIB.Topic({
-    ros: ros.value,
-    name: '/stm32_status',
-    messageType: 'std_msgs/String'
-  })
-  
-  stm32StatusTopic.value.subscribe((msg) => {
+  stm32StatusTopic = subscribeTopic('/stm32_status', 'std_msgs/String', (msg) => {
     const wasOffline = !stm32Connected.value
     stm32Connected.value = (msg.data === 'online')
-    
+
     if (stm32Connected.value && wasOffline) {
       addStm32Log(t('radar.stm32Online'))
     } else if (!stm32Connected.value && !wasOffline) {

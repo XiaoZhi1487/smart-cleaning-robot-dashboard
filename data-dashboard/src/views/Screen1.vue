@@ -304,8 +304,7 @@ import * as echarts from 'echarts/core';
 import { LineChart } from 'echarts/charts';
 import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
-import ROSLIB from 'roslib';
-import { rosState, updateRosState } from '@/store/rosState';
+import { rosState, subscribeTopic, publishTopic, connectRos } from '@/store/rosState';
 import { useI18n } from 'vue-i18n';
 
 defineOptions({ name: 'DataScreen' }) // eslint-disable-line no-undef
@@ -316,14 +315,11 @@ const { t, locale } = useI18n();
 const todayChart = ref(null);
 const realtimeLogList = ref(null);
 
-// ===== ROS 连接 =====
-const ros = ref(null);
-const isConnected = ref(false);
+// ===== ROS 连接（使用全局共享连接）=====
 let waveListener = null;
 let stm32StatusListener = null;
 let stm32ResultListener = null;
 let clientCountListener = null;
-let stm32CmdTopic = null;
 
 // ===== 真实数据状态 =====
 // 超声波距离 [左, 前, 右]（来自 /wave_length，单位 mm）
@@ -333,12 +329,12 @@ const stm32Online = ref(false);
 // 在线终端数（来自 /client_count）
 const clientCount = ref(0);
 // 是否已收到过数据
-const hasData = computed(() => isConnected.value && sensors.value.some(v => v > 0));
+const hasData = computed(() => rosState.connected && sensors.value.some(v => v > 0));
 
 // ===== 设备状态总览（真实数据）=====
 const deviceItems = computed(() => [
-  { key: 'ros', icon: '🔌', name: t('screen.rosComm'), value: isConnected.value ? t('screen.online') : t('screen.offline'), stateClass: isConnected.value ? 'normal' : 'error' },
-  { key: 'stm32', icon: '🎛️', name: t('screen.stm32'), value: stm32Online.value ? t('screen.online') : t('screen.offline'), stateClass: stm32Online.value ? 'normal' : (isConnected.value ? 'warning' : 'error') },
+  { key: 'ros', icon: '🔌', name: t('screen.rosComm'), value: rosState.connected ? t('screen.online') : t('screen.offline'), stateClass: rosState.connected ? 'normal' : 'error' },
+  { key: 'stm32', icon: '🎛️', name: t('screen.stm32'), value: stm32Online.value ? t('screen.online') : t('screen.offline'), stateClass: stm32Online.value ? 'normal' : (rosState.connected ? 'warning' : 'error') },
   { key: 'front', icon: '📡', name: t('screen.ultrasonicFront'), value: sensors.value[1] > 0 ? `${sensors.value[1]}mm` : t('screen.noData'), stateClass: sensors.value[1] > 0 && sensors.value[1] < 200 ? 'warning' : 'normal' },
   { key: 'left', icon: '📡', name: t('screen.ultrasonicLeft'), value: sensors.value[0] > 0 ? `${sensors.value[0]}mm` : t('screen.noData'), stateClass: sensors.value[0] > 0 && sensors.value[0] < 200 ? 'warning' : 'normal' },
   { key: 'right', icon: '📡', name: t('screen.ultrasonicRight'), value: sensors.value[2] > 0 ? `${sensors.value[2]}mm` : t('screen.noData'), stateClass: sensors.value[2] > 0 && sensors.value[2] < 200 ? 'warning' : 'normal' },
@@ -346,10 +342,10 @@ const deviceItems = computed(() => [
 ]);
 
 // ===== 通信 / 故障 徽标 =====
-const commStateClass = computed(() => isConnected.value ? 'normal' : 'error');
-const commStateText = computed(() => isConnected.value ? t('screen.online') : t('screen.offline'));
-const faultStateClass = computed(() => !isConnected.value ? 'error' : (stm32Online.value ? 'normal' : 'warning'));
-const faultStateText = computed(() => !isConnected.value ? t('screen.offline') : (stm32Online.value ? t('screen.noFault') : t('screen.offline')));
+const commStateClass = computed(() => rosState.connected ? 'normal' : 'error');
+const commStateText = computed(() => rosState.connected ? t('screen.online') : t('screen.offline'));
+const faultStateClass = computed(() => !rosState.connected ? 'error' : (stm32Online.value ? 'normal' : 'warning'));
+const faultStateText = computed(() => !rosState.connected ? t('screen.offline') : (stm32Online.value ? t('screen.noFault') : t('screen.offline')));
 
 // ===== 实时数据流统计（底部 6 格）=====
 const liveStats = computed(() => [
@@ -358,7 +354,7 @@ const liveStats = computed(() => [
   { key: 'right', icon: '📡', label: t('screen.ultrasonicRight'), value: sensors.value[2] > 0 ? `${sensors.value[2]}` : '--', unit: 'mm' },
   { key: 'stm32', icon: '🎛️', label: t('screen.stm32'), value: stm32Online.value ? t('screen.online') : t('screen.offline'), unit: '', stateClass: stm32Online.value ? 'normal' : 'warning' },
   { key: 'clients', icon: '🖥️', label: t('screen.clients'), value: clientCount.value > 0 ? `${clientCount.value}` : '--', unit: '', stateClass: 'normal' },
-  { key: 'ros', icon: '🔌', label: t('screen.rosComm'), value: isConnected.value ? t('screen.online') : t('screen.offline'), unit: '', highlight: true }
+  { key: 'ros', icon: '🔌', label: t('screen.rosComm'), value: rosState.connected ? t('screen.online') : t('screen.offline'), unit: '', highlight: true }
 ]);
 
 // ===== 设备工作日志（真实事件）=====
@@ -377,12 +373,12 @@ const robotControlStatusText = ref(t('screen.standby'));
 const CMD_MAP = { forward: 3, backward: 2, left: 4, right: 5, stop: 1 };
 
 const moveRobot = (direction) => {
-  if (!isConnected.value || !stm32CmdTopic) {
+  if (!rosState.connected) {
     robotControlStatus.value = 'idle';
     robotControlStatusText.value = t('screen.offline');
     return;
   }
-  stm32CmdTopic.publish(new ROSLIB.Message({ data: CMD_MAP[direction] }));
+  publishTopic('/stm32_cmd', 'std_msgs/Int32', { data: CMD_MAP[direction] });
   if (direction === 'stop') {
     robotControlStatus.value = 'idle';
     robotControlStatusText.value = t('screen.stopped');
@@ -397,7 +393,7 @@ const moveRobot = (direction) => {
 };
 
 const stopRobot = () => {
-  if (isConnected.value) moveRobot('stop');
+  if (rosState.connected) moveRobot('stop');
 };
 
 const handleKeyDown = (event) => {
@@ -459,37 +455,13 @@ const pushChartPoint = () => {
 
 const handleResize = () => chartInstance?.resize();
 
-// ===== ROS 订阅 =====
-const connectROS = () => {
-  if (isConnected.value) return;
-  const url = rosState.url;
-  ros.value = new ROSLIB.Ros({ url });
-
-  ros.value.on('connection', () => {
-    isConnected.value = true;
-    updateRosState(url, true);
-    addLog('success', 'ROS', t('screen.logRosConnected'));
-    subscribeTopics();
-  });
-  ros.value.on('error', (error) => {
-    console.error('ROS Connection Error:', error);
-  });
-  ros.value.on('close', () => {
-    isConnected.value = false;
-    stm32Online.value = false;
-    updateRosState(null, false);
-    addLog('warning', 'ROS', t('screen.logRosClosed'));
-  });
-};
-
+// ===== ROS 订阅（使用全局共享连接）=====
 const subscribeTopics = () => {
   // 超声波距离
-  waveListener = new ROSLIB.Topic({ ros: ros.value, name: '/wave_length', messageType: 'std_msgs/UInt8MultiArray' });
-  waveListener.subscribe(processWave);
+  waveListener = subscribeTopic('/wave_length', 'std_msgs/UInt8MultiArray', processWave);
 
   // STM32 在线状态
-  stm32StatusListener = new ROSLIB.Topic({ ros: ros.value, name: '/stm32_status', messageType: 'std_msgs/String' });
-  stm32StatusListener.subscribe((msg) => {
+  stm32StatusListener = subscribeTopic('/stm32_status', 'std_msgs/String', (msg) => {
     const was = stm32Online.value;
     stm32Online.value = msg.data === 'online';
     if (stm32Online.value && !was) addLog('success', 'STM32', t('screen.logStm32On'));
@@ -497,18 +469,13 @@ const subscribeTopics = () => {
   });
 
   // STM32 执行结果
-  stm32ResultListener = new ROSLIB.Topic({ ros: ros.value, name: '/stm32_result', messageType: 'std_msgs/String' });
-  stm32ResultListener.subscribe((msg) => {
+  stm32ResultListener = subscribeTopic('/stm32_result', 'std_msgs/String', (msg) => {
     if (msg.data.startsWith('success')) addLog('success', 'OK', t('screen.logResultOk'));
     else if (msg.data.startsWith('error')) addLog('error', 'ERR', t('screen.logResultErr'));
   });
 
   // 在线终端数
-  clientCountListener = new ROSLIB.Topic({ ros: ros.value, name: '/client_count', messageType: 'std_msgs/Int32' });
-  clientCountListener.subscribe((msg) => { clientCount.value = msg.data; });
-
-  // 发布控制指令
-  stm32CmdTopic = new ROSLIB.Topic({ ros: ros.value, name: '/stm32_cmd', messageType: 'std_msgs/Int32' });
+  clientCountListener = subscribeTopic('/client_count', 'std_msgs/Int32', (msg) => { clientCount.value = msg.data; });
 };
 
 const processWave = (message) => {
@@ -541,31 +508,25 @@ const processWave = (message) => {
 
 let lastSampleAt = 0;
 
-const disconnectROS = () => {
-  if (waveListener) { waveListener.unsubscribe(); waveListener = null; }
-  if (stm32StatusListener) { stm32StatusListener.unsubscribe(); stm32StatusListener = null; }
-  if (stm32ResultListener) { stm32ResultListener.unsubscribe(); stm32ResultListener = null; }
-  if (clientCountListener) { clientCountListener.unsubscribe(); clientCountListener = null; }
-  stm32CmdTopic = null;
-  if (ros.value) { ros.value.close(); ros.value = null; }
-  isConnected.value = false;
-  updateRosState(null, false);
-};
-
 watch(locale, () => {
   robotControlStatusText.value = robotControlStatus.value === 'idle' ? t('screen.standby') : robotControlStatusText.value;
 });
 
 onMounted(() => {
   chartInstance = initChart();
-  connectROS();
+  connectRos();
+  subscribeTopics();
+  addLog('success', 'ROS', t('screen.logRosConnected'));
   window.addEventListener('resize', handleResize);
   window.addEventListener('keydown', handleKeyDown);
   window.addEventListener('keyup', handleKeyUp);
 });
 
 onUnmounted(() => {
-  disconnectROS();
+  if (waveListener) { waveListener.unsubscribe(); waveListener = null; }
+  if (stm32StatusListener) { stm32StatusListener.unsubscribe(); stm32StatusListener = null; }
+  if (stm32ResultListener) { stm32ResultListener.unsubscribe(); stm32ResultListener = null; }
+  if (clientCountListener) { clientCountListener.unsubscribe(); clientCountListener = null; }
   window.removeEventListener('resize', handleResize);
   window.removeEventListener('keydown', handleKeyDown);
   window.removeEventListener('keyup', handleKeyUp);

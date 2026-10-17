@@ -21,6 +21,9 @@ export default {
     status: 'Trạng thái',
     connected: 'Đã kết nối',
     disconnected: 'Chưa kết nối',
+    connect: 'Kết nối',
+    disconnect: 'Ngắt kết nối',
+    apply: 'Áp dụng',
     copyright: '© 2026 Hệ Thống Giám Sát Robot Làm Sạch Thông Minh'
   },
   radar: {

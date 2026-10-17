@@ -21,6 +21,9 @@ export default {
     status: 'Status',
     connected: 'Disambungkan',
     disconnected: 'Tidak disambungkan',
+    connect: 'Sambung',
+    disconnect: 'Putuskan',
+    apply: 'Guna',
     copyright: '© 2026 Sistem Pemantauan Robot Pembersih Pintar'
   },
   radar: {
