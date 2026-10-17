@@ -418,6 +418,11 @@ const addLogEntry = (message) => {
   font-size: 0.875rem;
 }
 
+/* 工业相机信息卡片：去掉滚动条 */
+.stats-card .card-body {
+  overflow: hidden;
+}
+
 /* 统计信息网格 */
 .stats-grid {
   display: grid;
