@@ -71,7 +71,15 @@ export default {
     dataTooShort: '数据长度不足: {len}',
     parseError: '解析错误: {error}',
     stm32Online: 'STM32 已上线',
-    stm32Offline: 'STM32 离线'
+    stm32Offline: 'STM32 离线',
+    logFilterAll: '全部',
+    logFilterAlarm: '仅告警',
+    lvlInfo: '提示',
+    lvlWarning: '警告',
+    lvlError: '严重',
+    srcStm32: 'STM32',
+    srcCamera: '相机',
+    srcSystem: '系统'
   },
   camera: {
     pageTitle: '工业相机监控',
@@ -112,7 +120,19 @@ export default {
     rosTopic: '/camera/color/image_raw/compressed',
     httpStream: 'YOLO 标注流',
     switchRos: '已切换到 ROS 话题视频流',
-    switchHttp: '已切换到 YOLO HTTP 视频流'
+    switchHttp: '已切换到 YOLO HTTP 视频流',
+    detectionTitle: '视觉识别统计',
+    detectionTotal: '检出数量',
+    detectionNone: '当前无污渍',
+    detectionWait: '检测服务未就绪',
+    healthTitle: '设备健康',
+    deviceStatusLabel: '设备状态',
+    deviceOnline: '在线',
+    deviceOffline: '离线',
+    delay: '延迟',
+    connType: '连接类型',
+    cpuTemp: 'CPU 温度',
+    rgbTemp: 'RGB 温度'
   },
   screen: {
     pageTitle: '高空幕墙清洁机器人 - 实时监控大屏',

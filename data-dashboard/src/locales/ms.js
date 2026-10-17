@@ -71,7 +71,15 @@ export default {
     dataTooShort: 'Panjang data tidak mencukupi: {len}',
     parseError: 'Ralat penghuraian: {error}',
     stm32Online: 'STM32 telah dalam talian',
-    stm32Offline: 'STM32 luar talian'
+    stm32Offline: 'STM32 luar talian',
+    logFilterAll: 'Semua',
+    logFilterAlarm: 'Amaran',
+    lvlInfo: 'Maklumat',
+    lvlWarning: 'Amaran',
+    lvlError: 'Kritikal',
+    srcStm32: 'STM32',
+    srcCamera: 'Kamera',
+    srcSystem: 'Sistem'
   },
   camera: {
     pageTitle: 'Pemantauan Kamera Industri',
@@ -112,7 +120,19 @@ export default {
     rosTopic: '/camera/color/image_raw/compressed',
     httpStream: 'Aliran YOLO',
     switchRos: 'Beralih ke aliran topik ROS',
-    switchHttp: 'Beralih ke aliran HTTP YOLO'
+    switchHttp: 'Beralih ke aliran HTTP YOLO',
+    detectionTitle: 'Statistik Pengesanan',
+    detectionTotal: 'Dikesan',
+    detectionNone: 'Tiada kotoran',
+    detectionWait: 'Perkhidmatan belum sedia',
+    healthTitle: 'Kesihatan Peranti',
+    deviceStatusLabel: 'Status Peranti',
+    deviceOnline: 'Dalam talian',
+    deviceOffline: 'Luar talian',
+    delay: 'Latensi',
+    connType: 'Jenis Sambungan',
+    cpuTemp: 'Suhu CPU',
+    rgbTemp: 'Suhu RGB'
   },
   screen: {
     pageTitle: 'Robot Pembersih Dinding Tinggi - Papan Pemuka Pemantauan Masa Nyata',

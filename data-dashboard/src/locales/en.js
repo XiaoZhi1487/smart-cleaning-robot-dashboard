@@ -71,7 +71,15 @@ export default {
     dataTooShort: 'Insufficient data length: {len}',
     parseError: 'Parse error: {error}',
     stm32Online: 'STM32 online',
-    stm32Offline: 'STM32 offline'
+    stm32Offline: 'STM32 offline',
+    logFilterAll: 'All',
+    logFilterAlarm: 'Alarms',
+    lvlInfo: 'Info',
+    lvlWarning: 'Warning',
+    lvlError: 'Critical',
+    srcStm32: 'STM32',
+    srcCamera: 'Camera',
+    srcSystem: 'System'
   },
   camera: {
     pageTitle: 'Industrial Camera Monitoring',
@@ -112,7 +120,19 @@ export default {
     rosTopic: '/camera/color/image_raw/compressed',
     httpStream: 'YOLO stream',
     switchRos: 'Switched to ROS topic stream',
-    switchHttp: 'Switched to YOLO HTTP stream'
+    switchHttp: 'Switched to YOLO HTTP stream',
+    detectionTitle: 'Detection Stats',
+    detectionTotal: 'Detected',
+    detectionNone: 'No stains',
+    detectionWait: 'Detection service not ready',
+    healthTitle: 'Device Health',
+    deviceStatusLabel: 'Device Status',
+    deviceOnline: 'Online',
+    deviceOffline: 'Offline',
+    delay: 'Latency',
+    connType: 'Connection',
+    cpuTemp: 'CPU Temp',
+    rgbTemp: 'RGB Temp'
   },
   screen: {
     pageTitle: 'Curtain Wall Cleaning Robot - Real-time Monitoring Dashboard',

@@ -27,6 +27,7 @@ import urllib.request
 
 import cv2
 import numpy as np
+from PIL import Image, ImageDraw, ImageFont
 from flask import Flask, Response, jsonify
 
 # 抑制 Flask 每帧访问日志(GET /camera 200 会刷屏),仅保留 ERROR 级别
@@ -87,9 +88,11 @@ DEVICE = _pick_device()
 IMGSZ = ARGS.imgsz or None     # None = 用模型默认 imgsz
 
 # 检测置信度阈值
-CONF_THRESHOLD = 0.6
+CONF_THRESHOLD = 0.7
+# 像素 -> 厘米换算系数(每厘米对应的像素数),用于把框面积显示为 cm²;请按实际相机标定调整
+PX_PER_CM = 20.0
 # 每帧处理的 JPEG 质量(0-100)
-JPEG_QUALITY = 80
+JPEG_QUALITY = 100
 
 app = Flask(__name__)
 
@@ -99,6 +102,8 @@ _latest_jpg = None              # 最新已标注帧
 _latest_lock = threading.Lock()
 _model = None
 _model_status = {"loaded": False, "error": None, "names": []}
+# 最新一帧检测统计(供前端展示污渍类型/数量/置信度)
+_latest_detections = {"model_loaded": False, "total": 0, "items": []}
 
 
 def load_model():
@@ -117,22 +122,82 @@ def load_model():
         print(f"[ERROR] 模型加载失败: {e}")
 
 
+def _load_chinese_font(size):
+    """加载系统中文字体;OpenCV 的 Hershey 字体不含中文,需用 PIL 才能正确渲染"""
+    font_dir = os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts")
+    for name in ("simhei.ttf", "msyh.ttc", "simsun.ttc"):
+        path = os.path.join(font_dir, name)
+        if os.path.exists(path):
+            try:
+                return ImageFont.truetype(path, size)
+            except Exception:  # noqa: BLE001
+                continue
+    return None
+
+
+# 类别 -> 框/文字颜色(BGR):保证同一类别的框和标签文字同色
+_CLASS_COLORS = {
+    "contusion": (255, 144, 30),    # 橙
+    "scratches": (0, 215, 255),     # 黄
+    "crack": (255, 0, 0),           # 蓝
+    "spot": (203, 192, 255),        # 粉紫
+}
+
+
+def _cls_color(name):
+    return _CLASS_COLORS.get(name, (0, 255, 0))
+
+
+def _cls_name(names, idx):
+    """从模型 names 中取类别名;兼容 dict/list/缺失场景"""
+    if isinstance(names, dict):
+        return str(names.get(idx, f"class_{idx}"))
+    if isinstance(names, (list, tuple)) and idx < len(names):
+        return str(names[idx])
+    return f"class_{idx}"
+
+
 def draw_status_overlay(frame):
-    """在画面左上角叠加'YOLO11N 识别中'字样,便于确认检测服务是否在运行"""
+    """在画面左上角叠加'YOLO11N 识别中'字样(用 PIL 绘制,避免 cv2.putText 中文乱码成问号)"""
     h, w = frame.shape[:2]
     # 半透明黑底条,保证文字在任何画面上都清晰可读
-    bar_w, bar_h = min(300, w), 36
+    bar_w, bar_h = min(230, w), 36
     overlay = frame.copy()
     cv2.rectangle(overlay, (0, 0), (bar_w, bar_h), (0, 0, 0), -1)
     cv2.addWeighted(overlay, 0.55, frame, 0.45, 0, frame)
-    cv2.putText(frame, "YOLO11N 识别中", (10, bar_h - 12), cv2.FONT_HERSHEY_SIMPLEX,
-                0.85, (0, 255, 0), 2, cv2.LINE_AA)
+
+    font = _load_chinese_font(22)
+    if font is not None:
+        # OpenCV(BGR) -> PIL(RGB) 绘制中文 -> 再转回 BGR
+        pil = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+        draw = ImageDraw.Draw(pil)
+        draw.text((10, (bar_h - 22) // 2), "YOLO11N 识别中", font=font, fill=(0, 255, 0))
+        frame = cv2.cvtColor(np.array(pil), cv2.COLOR_RGB2BGR)
+    else:
+        # 找不到中文字体时回退为纯英文,避免出现问号乱码
+        cv2.putText(frame, "YOLO11N YOLO RUNNING", (10, bar_h - 12),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.1, (0, 255, 0), 2, cv2.LINE_AA)
+
+    # 左下角:显示 YOLO 推理参数(置信度/输入尺寸/设备),便于确认当前检测配置
+    info = f"YOLO  conf {CONF_THRESHOLD}  imgsz {IMGSZ if IMGSZ else 'default'}  {DEVICE}"
+    font2 = _load_chinese_font(16)
+    if font2 is not None:
+        h_, w_ = frame.shape[:2]
+        b2_h = 26
+        pil = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+        bbox = ImageDraw.Draw(pil).textbbox((10, h_ - b2_h), info, font=font2)
+        bg_w = (bbox[2] - bbox[0]) + 12
+        overlay = pil.copy()
+        ImageDraw.Draw(overlay).rectangle([0, h_ - b2_h, bg_w, h_], fill=(0, 0, 0))
+        pil = Image.blend(pil, overlay, 0.55)
+        ImageDraw.Draw(pil).text((10, h_ - b2_h + 3), info, font=font2, fill=(0, 255, 255))
+        frame = cv2.cvtColor(np.array(pil), cv2.COLOR_RGB2BGR)
     return frame
 
 
 def process_jpeg(jpg_bytes):
     """对单个 JPEG 帧做检测标注并更新最新标注帧"""
-    global _latest_jpg
+    global _latest_jpg, _latest_detections
     frame = cv2.imdecode(np.frombuffer(jpg_bytes, dtype=np.uint8), cv2.IMREAD_COLOR)
     if frame is None:
         return
@@ -144,9 +209,63 @@ def process_jpeg(jpg_bytes):
             if IMGSZ:
                 kwargs["imgsz"] = IMGSZ
             results = _model.predict(frame, **kwargs)
-            annotated = results[0].plot()       # 绘制标注框/类别/置信度
+            annotated = frame.copy()          # 自定义绘制,完全控制框/文字颜色
+            boxes = results[0].boxes
+            names = getattr(_model, "names", None)
+
+            # 统计本帧检测明细:各类别数量与最高置信度
+            stat = {}
+
+            # 每个目标:统一颜色画框 + 框上方标签一行(类别 置信度 中心坐标 面积)
+            if boxes is not None and len(boxes) > 0:
+                font = _load_chinese_font(20)
+                xyxy = boxes.xyxy.cpu().numpy()
+                for (x1, y1, x2, y2), cls_id, conf in zip(xyxy, boxes.cls.tolist(), boxes.conf.tolist()):
+                    idx = int(cls_id)
+                    cls_name = _cls_name(names, idx)
+                    color = _cls_color(cls_name)
+                    # 画框线
+                    cv2.rectangle(annotated, (int(x1), int(y1)), (int(x2), int(y2)), color, 2)
+                    # 画标签文字(与框同色,带半透明黑底),优先画在框正上方,框贴顶时改到框内顶部
+                    cx, cy = int(round((x1 + x2) / 2)), int(round((y1 + y2) / 2))
+                    area_cm = round((x2 - x1) * (y2 - y1) / (PX_PER_CM ** 2), 1)
+                    label = f"{cls_name} {conf:.2f} 中心({cx},{cy}) 面积{area_cm}cm²"
+                    if font is not None:
+                        pil = Image.fromarray(cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB))
+                        ty = int(y1) - 26
+                        if ty < 0:
+                            ty = int(y1) + 4
+                        # 先按文字尺寸画半透明黑底,再写字,保证在任意画面上清晰可读
+                        bbox = ImageDraw.Draw(pil).textbbox((int(x1), ty), label, font=font)
+                        bg_w, bg_h = (bbox[2] - bbox[0]) + 8, (bbox[3] - bbox[1]) + 4
+                        overlay = pil.copy()
+                        ImageDraw.Draw(overlay).rectangle(
+                            [bbox[0] - 3, bbox[1] - 2, bbox[0] - 3 + bg_w, bbox[1] - 2 + bg_h], fill=(0, 0, 0))
+                        pil = Image.blend(pil, overlay, 0.55)
+                        ImageDraw.Draw(pil).text((int(x1), ty), label, font=font, fill=(color[2], color[1], color[0]))
+                        annotated = cv2.cvtColor(np.array(pil), cv2.COLOR_RGB2BGR)
+
+            if boxes is not None and len(boxes) > 0:
+                for cls_id, conf in zip(boxes.cls.tolist(), boxes.conf.tolist()):
+                    idx = int(cls_id)
+                    key = _cls_name(names, idx)
+                    cur = stat.get(key)
+                    if cur is None:
+                        stat[key] = {"count": 1, "max_conf": round(conf, 3)}
+                    else:
+                        cur["count"] += 1
+                        if conf > cur["max_conf"]:
+                            cur["max_conf"] = round(conf, 3)
+            items = [{"name": k, **v} for k, v in stat.items()]
+            with _latest_lock:
+                _latest_detections = {
+                    "model_loaded": True,
+                    "total": len(boxes) if boxes is not None else 0,
+                    "items": items,
+                }
         except Exception as e:                  # noqa: BLE001
             annotated = frame
+            _latest_detections["model_loaded"] = True
     else:
         annotated = frame
 
@@ -256,6 +375,22 @@ def camera_stream():
 def status():
     """健康状况接口"""
     return jsonify(**_model_status)
+
+
+@app.after_request
+def add_cors_headers(resp):
+    """允许前端跨端口(8081->8083) fetch 检测统计接口"""
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    return resp
+
+
+@app.route("/detections")
+def detections():
+    """最新一帧检测统计(污渍类型/数量/置信度)"""
+    with _latest_lock:
+        return jsonify(**_latest_detections)
 
 
 if __name__ == "__main__":

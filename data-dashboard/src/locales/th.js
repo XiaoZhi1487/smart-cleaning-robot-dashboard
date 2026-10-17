@@ -71,7 +71,15 @@ export default {
     dataTooShort: 'ความยาวข้อมูลไม่เพียงพอ: {len}',
     parseError: 'ข้อผิดพลาดการวิเคราะห์: {error}',
     stm32Online: 'STM32 ออนไลน์',
-    stm32Offline: 'STM32 ออฟไลน์'
+    stm32Offline: 'STM32 ออฟไลน์',
+    logFilterAll: 'ทั้งหมด',
+    logFilterAlarm: 'แจ้งเตือน',
+    lvlInfo: 'ข้อมูล',
+    lvlWarning: 'คำเตือน',
+    lvlError: 'รุนแรง',
+    srcStm32: 'STM32',
+    srcCamera: 'กล้อง',
+    srcSystem: 'ระบบ'
   },
   camera: {
     pageTitle: 'การตรวจสอบกล้องอุตสาหกรรม',
@@ -112,7 +120,19 @@ export default {
     rosTopic: '/camera/color/image_raw/compressed',
     httpStream: 'สตรีม YOLO',
     switchRos: 'สลับไปสตรีมหัวข้อ ROS',
-    switchHttp: 'สลับไปสตรีม HTTP ของ YOLO'
+    switchHttp: 'สลับไปสตรีม HTTP ของ YOLO',
+    detectionTitle: 'สถิติการตรวจจับ',
+    detectionTotal: 'จำนวนที่ตรวจพบ',
+    detectionNone: 'ไม่มีคราบ',
+    detectionWait: 'บริการยังไม่พร้อม',
+    healthTitle: 'สุขภาพอุปกรณ์',
+    deviceStatusLabel: 'สถานะอุปกรณ์',
+    deviceOnline: 'ออนไลน์',
+    deviceOffline: 'ออฟไลน์',
+    delay: 'ความหน่วง',
+    connType: 'ประเภทการเชื่อมต่อ',
+    cpuTemp: 'อุณหภูมิ CPU',
+    rgbTemp: 'อุณหภูมิ RGB'
   },
   screen: {
     pageTitle: 'หุ่นยนต์ทำความสะอาดผนังม่านอาคารสูง - จอแสดงผลเรียลไทม์',

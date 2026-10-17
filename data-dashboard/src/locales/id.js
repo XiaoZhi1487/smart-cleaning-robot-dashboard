@@ -71,7 +71,15 @@ export default {
     dataTooShort: 'Panjang data tidak cukup: {len}',
     parseError: 'Kesalahan parsing: {error}',
     stm32Online: 'STM32 sudah online',
-    stm32Offline: 'STM32 offline'
+    stm32Offline: 'STM32 offline',
+    logFilterAll: 'Semua',
+    logFilterAlarm: 'Amaran',
+    lvlInfo: 'Info',
+    lvlWarning: 'Peringatan',
+    lvlError: 'Kritis',
+    srcStm32: 'STM32',
+    srcCamera: 'Kamera',
+    srcSystem: 'Sistem'
   },
   camera: {
     pageTitle: 'Pemantauan Kamera Industri',
@@ -112,7 +120,19 @@ export default {
     rosTopic: '/camera/color/image_raw/compressed',
     httpStream: 'Aliran YOLO',
     switchRos: 'Beralih ke aliran topik ROS',
-    switchHttp: 'Beralih ke aliran HTTP YOLO'
+    switchHttp: 'Beralih ke aliran HTTP YOLO',
+    detectionTitle: 'Statistik Deteksi',
+    detectionTotal: 'Terdeteksi',
+    detectionNone: 'Tidak ada noda',
+    detectionWait: 'Layanan belum siap',
+    healthTitle: 'Kesehatan Perangkat',
+    deviceStatusLabel: 'Status Perangkat',
+    deviceOnline: 'Daring',
+    deviceOffline: 'Luring',
+    delay: 'Latensi',
+    connType: 'Jenis Koneksi',
+    cpuTemp: 'Suhu CPU',
+    rgbTemp: 'Suhu RGB'
   },
   screen: {
     pageTitle: 'Robot Pembersih Dinding Tinggi - Dasbor Pemantauan Real-time',

@@ -71,7 +71,15 @@ export default {
     dataTooShort: 'Độ dài dữ liệu không đủ: {len}',
     parseError: 'Lỗi phân tích: {error}',
     stm32Online: 'STM32 đã trực tuyến',
-    stm32Offline: 'STM32 ngoại tuyến'
+    stm32Offline: 'STM32 ngoại tuyến',
+    logFilterAll: 'Tất cả',
+    logFilterAlarm: 'Cảnh báo',
+    lvlInfo: 'Thông tin',
+    lvlWarning: 'Cảnh báo',
+    lvlError: 'Nghiêm trọng',
+    srcStm32: 'STM32',
+    srcCamera: 'Camera',
+    srcSystem: 'Hệ thống'
   },
   camera: {
     pageTitle: 'Giám Sát Camera Công Nghiệp',
@@ -112,7 +120,19 @@ export default {
     rosTopic: '/camera/color/image_raw/compressed',
     httpStream: 'Luồng YOLO',
     switchRos: 'Đã chuyển sang luồng topic ROS',
-    switchHttp: 'Đã chuyển sang luồng HTTP YOLO'
+    switchHttp: 'Đã chuyển sang luồng HTTP YOLO',
+    detectionTitle: 'Thống kê phát hiện',
+    detectionTotal: 'Đã phát hiện',
+    detectionNone: 'Không có vết bẩn',
+    detectionWait: 'Dịch vụ chưa sẵn sàng',
+    healthTitle: 'Sức khỏe thiết bị',
+    deviceStatusLabel: 'Trạng thái thiết bị',
+    deviceOnline: 'Trực tuyến',
+    deviceOffline: 'Ngoại tuyến',
+    delay: 'Độ trễ',
+    connType: 'Loại kết nối',
+    cpuTemp: 'Nhiệt CPU',
+    rgbTemp: 'Nhiệt RGB'
   },
   screen: {
     pageTitle: 'Robot Làm Sạch Tường Cao - Bảng Giám Sát Thời Gian Thực',

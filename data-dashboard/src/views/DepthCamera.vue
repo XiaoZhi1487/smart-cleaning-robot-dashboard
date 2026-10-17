@@ -58,7 +58,7 @@
             <div class="stats-grid">
               <div class="stat-item">
                 <div class="stat-label">{{ $t('camera.videoSource') }}</div>
-                <div class="stat-value">RK3588 工业相机</div>
+                <div class="stat-value">Orbbec Gemini 336（G40155-180）</div>
               </div>
               <div class="stat-item">
                 <div class="stat-label">{{ $t('camera.resolution') }}</div>
@@ -72,15 +72,32 @@
                 <div class="stat-label">{{ $t('camera.format') }}</div>
                 <div class="stat-value">MJPEG</div>
               </div>
+              <div class="stat-item">
+                <div class="stat-label">{{ $t('camera.deviceStatusLabel') }}</div>
+                <div class="stat-value" :class="devOnline ? 'normal' : 'error'">{{ devOnline ? $t('camera.deviceOnline') : $t('camera.deviceOffline') }}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">{{ $t('camera.delay') }}</div>
+                <div class="stat-value">{{ devDelay }}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">{{ $t('camera.connType') }}</div>
+                <div class="stat-value">{{ devConnType }}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">{{ $t('camera.cpuTemp') }}</div>
+                <div class="stat-value">{{ devTempCpu }}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">{{ $t('camera.rgbTemp') }}</div>
+                <div class="stat-value">{{ devTempRgb }}</div>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- 相机实时运行状态（基于真实 ROS 相机话题数据） -->
         <div class="card clean-card">
-          <div class="card-header">
-            <span class="card-title"><svg class="icon-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/></svg> {{ $t('camera.liveStatus') }}</span>
-          </div>
           <div class="card-body clean-body">
             <div class="clean-value" :class="{ 'not-qualified': !cameraConnected }">
               {{ fpsDisplay }}
@@ -88,32 +105,33 @@
             <div class="clean-status" :class="{ 'not-qualified': !cameraConnected }">
               {{ cameraConnected ? $t('camera.liveFps') : $t('camera.noFrame') }}
             </div>
-            <div class="live-rows">
-              <div class="live-row">
-                <span class="live-label">{{ $t('camera.videoAddr') }}</span>
-                <span class="live-value">{{ videoSourceAddr }}</span>
-              </div>
-            </div>
           </div>
         </div>
 
-        <!-- 连接日志（与相机信息、相机实时运行状态并列） -->
-        <div class="card log-card">
+        <!-- 视觉识别统计（YOLO 检测结果） -->
+        <div class="card detect-card">
           <div class="card-header">
-            <span class="card-title"><svg class="icon-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg> {{ $t('camera.connLog') }}</span>
+            <span class="card-title"><svg class="icon-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M8 11h6"/><path d="M11 8v6"/></svg> {{ $t('camera.detectionTitle') }}</span>
           </div>
-          <div class="card-body log-body">
-            <div v-if="logs.length === 0" class="empty-log">
-              {{ cameraConnected ? $t('camera.cameraNormal') : $t('camera.waiting') }}
-            </div>
-            <div v-else class="log-list">
-              <div v-for="(log, index) in logs" :key="index" class="log-item">
-                <span class="log-time">{{ log.time }}</span>
-                <span class="log-data">{{ log.message }}</span>
+          <div class="card-body detect-body">
+            <div v-if="detectionsReady" class="detect-content">
+              <div class="stat-item detect-total">
+                <div class="stat-label">{{ $t('camera.detectionTotal') }}</div>
+                <div class="stat-value" :class="{ warn: detectionsTotal > 0 }">{{ detectionsTotal }}</div>
+              </div>
+              <div v-if="detectionsItems.length === 0" class="detect-none">{{ $t('camera.detectionNone') }}</div>
+              <div v-else class="detect-list">
+                <div v-for="item in detectionsItems" :key="item.name" class="detect-row">
+                  <span class="detect-name">{{ item.name }}</span>
+                  <span class="detect-count">×{{ item.count }}</span>
+                  <span class="detect-conf">{{ Math.round(item.max_conf * 100) }}%</span>
+                </div>
               </div>
             </div>
+            <div v-else class="empty-log">{{ $t('camera.detectionWait') }}</div>
           </div>
         </div>
+
       </div>
     </div>
   </div>
@@ -145,13 +163,6 @@ let lastFrameObjectUrl = ''
 // 当前显示地址
 const displayUrl = computed(() => sourceMode.value === 'python' ? cameraUrl.value : rosFrameUrl.value)
 
-// 当前视频源显示地址（随切换的真实地址变化）
-const videoSourceAddr = computed(() => {
-  if (sourceMode.value === 'python') return rosState.cameraUrl
-  const host = rosState.url.replace(/^wss?:\/\//, '')
-  return `${host} /camera/color/image_raw/compressed`
-})
-
 // 将 ROS 压缩图像(base64 JPEG)转成可显示的 Blob URL
 const base64ToBlobUrl = (b64) => {
   const binary = atob(b64)
@@ -174,7 +185,6 @@ const setSource = (mode) => {
     // ROS 话题模式：已有帧则保持连接
     cameraConnected.value = !!rosFrameUrl.value
   }
-  addLogEntry(mode === 'python' ? t('camera.switchHttp') : t('camera.switchRos'))
 }
 
 // ===== 真实相机话题数据（来自 /camera/*）=====
@@ -187,10 +197,45 @@ const fpsDisplay = computed(() => fps.value ? fps.value.toFixed(1) : '--')
 // 订阅句柄
 let cameraInfoListener = null
 let compressedListener = null
+let deviceStatusListener = null
+let diagnosticsListener = null
 let cameraRetryTimer = null
+let detectPollTimer = null
 
-// 数据日志
-const logs = ref([])
+// ===== 视觉识别统计（轮询 YOLO 后端 /detections）=====
+const detectionsReady = ref(false)
+const detectionsTotal = ref(0)
+const detectionsItems = ref([])
+
+// 从状态栏 CAM 地址提取后端服务主机（如 http://localhost:8083/camera -> http://localhost:8083）
+const getYoloHost = () => {
+  const m = rosState.cameraUrl.match(/^(https?:\/\/[^/]+)/)
+  return m ? m[1] : ''
+}
+
+const pollDetections = async () => {
+  const host = getYoloHost()
+  if (!host) return
+  try {
+    const res = await fetch(`${host}/detections`)
+    const data = await res.json()
+    detectionsReady.value = !!data.model_loaded
+    detectionsTotal.value = data.total || 0
+    detectionsItems.value = data.items || []
+  } catch (e) {
+    detectionsReady.value = false
+    detectionsTotal.value = 0
+    detectionsItems.value = []
+  }
+}
+
+// ===== 设备健康诊断（订阅真实话题）=====
+const devOnline = ref(false)
+const devFrameRate = ref('--')
+const devDelay = ref('--')
+const devConnType = ref('--')
+const devTempCpu = ref('--')
+const devTempRgb = ref('--')
 
 // 工业相机状态文本
 const cameraStatus = computed(() => {
@@ -206,20 +251,24 @@ watch(() => rosState.cameraUrl, (newUrl) => {
   cameraError.value = ''
   cameraRetryCount.value = 0
   cameraUrl.value = `${newUrl}?t=${Date.now()}`
-  addLogEntry(t('camera.switchHttp'))
 })
 
 onMounted(() => {
   window.addEventListener('resize', handleResize)
   connectRos()
   subscribeToTopics()
-  addLogEntry(t('camera.rosConnected'))
+  // 轮询 YOLO 检测统计（后台持续刷新）
+  pollDetections()
+  detectPollTimer = setInterval(pollDetections, 1500)
 })
 
 onUnmounted(() => {
+  if (detectPollTimer) { clearInterval(detectPollTimer); detectPollTimer = null }
   if (cameraRetryTimer) clearTimeout(cameraRetryTimer)
   if (cameraInfoListener) { cameraInfoListener.unsubscribe(); cameraInfoListener = null }
   if (compressedListener) { compressedListener.unsubscribe(); compressedListener = null }
+  if (deviceStatusListener) { deviceStatusListener.unsubscribe(); deviceStatusListener = null }
+  if (diagnosticsListener) { diagnosticsListener.unsubscribe(); diagnosticsListener = null }
   if (lastFrameObjectUrl) { URL.revokeObjectURL(lastFrameObjectUrl); lastFrameObjectUrl = '' }
   window.removeEventListener('resize', handleResize)
 })
@@ -236,7 +285,6 @@ const onCameraError = () => {
 
   cameraRetryCount.value++
   if (cameraRetryCount.value <= maxRetries) {
-    addLogEntry(t('camera.loadRetry', { count: cameraRetryCount.value, max: maxRetries }))
     // 添加时间戳防止缓存
     cameraRetryTimer = setTimeout(() => {
       cameraUrl.value = `${rosState.cameraUrl}?t=${Date.now()}`
@@ -244,18 +292,14 @@ const onCameraError = () => {
   } else {
     cameraConnected.value = false
     cameraError.value = t('camera.loadFail')
-    addLogEntry(t('camera.loadFail'))
   }
 }
 
 // ===== 工业相机加载成功 =====
 const onCameraLoad = () => {
-  // 只在断开→连接首次成功时记一次日志,避免每帧重复记录
-  const wasConnected = cameraConnected.value
   cameraConnected.value = true
   cameraError.value = ''
   cameraRetryCount.value = 0
-  if (!wasConnected) addLogEntry(t('camera.loadSuccess'))
 }
 
 // ===== 订阅真实相机话题（使用全局共享连接）=====
@@ -283,6 +327,29 @@ const subscribeToTopics = () => {
       // base64 解析失败则忽略本帧
     }
   })
+
+  // 相机设备状态（帧率/延迟/在线/连接类型）
+  deviceStatusListener = subscribeTopic('/camera/device_status', 'orbbec_camera_msgs/DeviceStatus', (msg) => {
+    devOnline.value = !!msg.device_online
+    if (msg.color_frame_rate_cur !== undefined) {
+      devFrameRate.value = msg.color_frame_rate_cur.toFixed(1) + ' FPS'
+    }
+    if (msg.color_delay_ms_cur !== undefined) {
+      devDelay.value = msg.color_delay_ms_cur.toFixed(0) + ' ms'
+    }
+    if (msg.connection_type) devConnType.value = msg.connection_type
+  })
+
+  // 相机温度诊断（CPU / RGB 温度）
+  diagnosticsListener = subscribeTopic('/diagnostics', 'diagnostic_msgs/DiagnosticArray', (msg) => {
+    if (!msg.status || !msg.status.length) return
+    const diag = msg.status[0]
+    if (!diag.values) return
+    diag.values.forEach((v) => {
+      if (v.key === 'CPU Temperature') devTempCpu.value = v.value + '°C'
+      if (v.key === 'RGB Temperature') devTempRgb.value = v.value + '°C'
+    })
+  })
 }
 
 // ===== 实时帧率计算 =====
@@ -296,13 +363,6 @@ const updateFps = () => {
     fps.value = fps.value === 0 ? inst : fps.value * 0.7 + inst * 0.3
   }
   lastInfoTime = now
-}
-
-// ===== 添加日志 =====
-const addLogEntry = (message) => {
-  const timeStr = new Date().toLocaleTimeString()
-  logs.value.unshift({ time: timeStr, message })
-  if (logs.value.length > 20) logs.value.pop()
 }
 </script>
 
@@ -476,6 +536,66 @@ const addLogEntry = (message) => {
   color: #FF3366;
 }
 
+.stat-value.warn {
+  color: #FFCC00;
+}
+
+/* 视觉识别统计卡片 */
+.detect-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detect-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detect-total {
+  background: rgba(0, 229, 255, 0.08);
+}
+
+.detect-none {
+  text-align: center;
+  color: #8b9bb4;
+  font-size: 0.8125rem;
+  padding: 10px 0;
+}
+
+.detect-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.detect-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(22, 93, 255, 0.05);
+  border: 1px solid rgba(22, 93, 255, 0.1);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 0.8125rem;
+}
+
+.detect-name {
+  flex: 1;
+  color: #e6f7ff;
+}
+
+.detect-count {
+  color: #00E5FF;
+  font-weight: bold;
+}
+
+.detect-conf {
+  color: #00FF96;
+  font-family: var(--font-mono);
+}
+
 /* 深度图例 */
 .depth-legend {
   margin-top: 10px;
@@ -523,37 +643,11 @@ const addLogEntry = (message) => {
   height: 100%;
 }
 
-.log-body {
-  padding: 10px;
-}
-
 .empty-log {
   text-align: center;
   color: #8b9bb4;
   padding: 30px;
   font-size: 0.8125rem;
-}
-
-.log-list {
-  font-family: 'Consolas', monospace;
-  font-size: 0.6875rem;
-}
-
-.log-item {
-  display: flex;
-  gap: 12px;
-  padding: 5px 0;
-  border-bottom: 1px solid rgba(22, 93, 255, 0.1);
-  color: #e6f7ff;
-}
-
-.log-time {
-  color: #8b9bb4;
-  min-width: 70px;
-}
-
-.log-data {
-  color: #00E5FF;
 }
 
 /* 工业相机样式 */
@@ -617,44 +711,6 @@ const addLogEntry = (message) => {
 
 .clean-status.not-qualified {
   color: #FF3366;
-}
-
-/* 实时运行状态行 */
-.live-rows {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border-top: 1px solid rgba(22, 93, 255, 0.15);
-  padding-top: 10px;
-}
-
-.live-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.8125rem;
-}
-
-.live-label {
-  color: #8b9bb4;
-}
-
-.live-value {
-  color: #00E5FF;
-  font-weight: 600;
-  font-family: 'Consolas', monospace;
-  word-break: break-all;
-  text-align: right;
-  max-width: 70%;
-}
-
-.live-value.ok {
-  color: #00FF96;
-}
-
-.live-value.warn {
-  color: #FFCC00;
 }
 
 /* 响应式 */

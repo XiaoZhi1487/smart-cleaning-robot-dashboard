@@ -105,9 +105,15 @@
             <!-- 操作日志 -->
             <div class="control-log">
               <div class="log-title"><svg class="icon-svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg> {{ $t('radar.operationLog') }}</div>
+              <div class="log-filter">
+                <button :class="{ active: logFilter === 'all' }" @click="logFilter = 'all'">{{ $t('radar.logFilterAll') }}</button>
+                <button :class="{ active: logFilter === 'alarm' }" @click="logFilter = 'alarm'">{{ $t('radar.logFilterAlarm') }}</button>
+              </div>
               <div class="log-list">
-                <div v-if="stm32Logs.length === 0" class="empty-log">{{ $t('radar.waitingOp') }}</div>
-                <div v-for="(log, index) in stm32Logs" :key="index" class="log-item" :class="{ error: log.isError }">
+                <div v-if="filteredLogs.length === 0" class="empty-log">{{ $t('radar.waitingOp') }}</div>
+                <div v-for="log in filteredLogs" :key="log.id" class="log-item" :class="log.level">
+                  <span class="log-level" :class="log.level">{{ logLevelText(log.level) }}</span>
+                  <span class="log-src">{{ logSrcText(log.source) }}</span>
                   <span class="log-time">{{ log.time }}</span>
                   <span class="log-msg">{{ log.message }}</span>
                 </div>
@@ -165,6 +171,8 @@ const currentCommand = computed(() => {
 // ROS 话题句柄（使用全局共享连接）
 let stm32ResultTopic = null
 let stm32StatusTopic = null
+let diagnosticsTopic = null
+let lastDiagKey = ''
 
 // 指令映射：命令名 -> Int32 值
 const CMD_MAP = {
@@ -196,12 +204,33 @@ const stm32Status = computed(() => {
 
 
 // 添加 STM32 日志
+let eventSeq = 0
 const addStm32Log = (message, isError = false) => {
-  const now = new Date()
-  const timeStr = now.toLocaleTimeString()
-  stm32Logs.value.unshift({ time: timeStr, message, isError })
+  const timeStr = new Date().toLocaleTimeString()
+  const level = isError ? 'error' : 'info'
+  stm32Logs.value.unshift({ id: ++eventSeq, time: timeStr, message, level, source: 'stm32' })
   if (stm32Logs.value.length > 15) stm32Logs.value.pop()
 }
+
+// 添加系统/相机告警事件（等级：warning / error）
+const addSystemEvent = (message, level = 'warning', source = 'camera') => {
+  const timeStr = new Date().toLocaleTimeString()
+  stm32Logs.value.unshift({ id: ++eventSeq, time: timeStr, message, level, source })
+  if (stm32Logs.value.length > 15) stm32Logs.value.pop()
+}
+
+// 日志筛选：全部 / 仅告警
+const logFilter = ref('all')
+const filteredLogs = computed(() => {
+  if (logFilter.value === 'all') return stm32Logs.value
+  return stm32Logs.value.filter(l => l.level === 'warning' || l.level === 'error')
+})
+
+// 等级/来源文案
+const logLevelText = (lvl) =>
+  lvl === 'error' ? t('radar.lvlError') : lvl === 'warning' ? t('radar.lvlWarning') : t('radar.lvlInfo')
+const logSrcText = (src) =>
+  src === 'camera' ? t('radar.srcCamera') : src === 'system' ? t('radar.srcSystem') : t('radar.srcStm32')
 
 // 发送 STM32 控制指令（ROS 话题方式）
 const sendStm32Cmd = (command) => {
@@ -298,6 +327,7 @@ onUnmounted(() => {
   if (waveLengthListener.value) { waveLengthListener.value.unsubscribe(); waveLengthListener.value = null }
   if (stm32ResultTopic) { stm32ResultTopic.unsubscribe(); stm32ResultTopic = null }
   if (stm32StatusTopic) { stm32StatusTopic.unsubscribe(); stm32StatusTopic = null }
+  if (diagnosticsTopic) { diagnosticsTopic.unsubscribe(); diagnosticsTopic = null }
   window.removeEventListener('resize', resizeCanvas)
   window.removeEventListener('keydown', handleKeyDown)
   window.removeEventListener('keyup', handleKeyUp)
@@ -508,6 +538,20 @@ const subscribeToTopic = () => {
     } else if (!stm32Connected.value && !wasOffline) {
       addStm32Log(t('radar.stm32Offline'), true)
     }
+  })
+
+  // 订阅设备诊断：level > 0 时生成告警事件（只在状态变化时记录一次，避免刷屏）
+  diagnosticsTopic = subscribeTopic('/diagnostics', 'diagnostic_msgs/DiagnosticArray', (msg) => {
+    if (!msg.status || !msg.status.length) return
+    msg.status.forEach((diag) => {
+      if (diag.level > 0) {
+        const key = `${diag.name}|${diag.level}`
+        if (key === lastDiagKey) return
+        lastDiagKey = key
+        const lvl = diag.level >= 2 ? 'error' : 'warning'
+        addSystemEvent(`${diag.name}: ${diag.message}`, lvl, 'camera')
+      }
+    })
   })
 }
 
@@ -1069,6 +1113,28 @@ const getSensorStatusText = (sensor) => {
   margin-bottom: 6px;
 }
 
+/* 日志筛选按钮 */
+.log-filter {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.log-filter button {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(22, 93, 255, 0.3);
+  color: #8b9bb4;
+  border-radius: 4px;
+  padding: 3px 10px;
+  font-size: 0.6875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.log-filter button.active {
+  color: #00E5FF;
+  border-color: rgba(0, 229, 255, 0.5);
+  background: rgba(0, 229, 255, 0.1);
+}
+
 .log-list {
   font-family: 'Consolas', monospace;
   font-size: 0.75rem;
@@ -1076,14 +1142,44 @@ const getSensorStatusText = (sensor) => {
 
 .log-item {
   display: flex;
+  align-items: center;
   gap: 8px;
   padding: 3px 0;
   border-bottom: 1px solid rgba(22, 93, 255, 0.1);
   color: #e6f7ff;
 }
 
+/* 等级徽标 */
+.log-level {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 0.625rem;
+  color: #0a101f;
+}
+.log-level.info {
+  background: rgba(139, 155, 180, 0.8);
+}
+.log-level.warning {
+  background: #FFCC00;
+}
+.log-level.error {
+  background: #FF3366;
+}
+
 .log-item.error {
   color: #FF3366;
+}
+.log-item.warning {
+  color: #FFCC00;
+}
+
+/* 来源 */
+.log-src {
+  flex-shrink: 0;
+  color: #8b9bb4;
+  font-size: 0.6875rem;
+  min-width: 44px;
 }
 
 .log-time {
