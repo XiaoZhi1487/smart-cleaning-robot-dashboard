@@ -1,0 +1,22 @@
+# ===== 设备端代码（不推送，本地运行/上传部署） =====
+name_huanghongle2/
+
+# ===== 依赖 / 构建产物 =====
+node_modules/
+dist/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+.venv/
+venv/
+*.log
+
+# ===== IDE / 系统 =====
+.trae/
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
