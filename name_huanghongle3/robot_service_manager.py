@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 机器人服务管理器 - 交互式版本
 支持选择性启动/停止服务，防止冲突和资源耗尽
@@ -90,7 +90,7 @@ SERVICES = {
         "launch_cmd": None,  # 特殊处理
         "work_dir": "/home/nvidia/name_zhoushifei/WS",
         "log_file": "/tmp/stm32_control.log",
-        "delay": 3,
+        "delay": 5,
         "description": "控制指令转发到STM32"
     },
     5: {

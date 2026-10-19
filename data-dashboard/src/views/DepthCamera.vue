@@ -174,9 +174,10 @@ const loadDeviceInfo = async () => {
 // ===== 真实相机话题数据（来自 /camera/*）=====
 // 分辨率 / 帧率（来自 /camera/color/camera_info）
 const resolution = ref('--')
-// 帧率：由 camera_info 消息到达间隔计算得到（真实值）
-const fps = ref(0)
-const fpsDisplay = computed(() => fps.value ? fps.value.toFixed(1) : '--')
+// 各流帧率：由设备 device_status 上报的真实帧率（彩色/深度/红外不同）
+const colorFps = ref(0)
+const depthFps = ref(0)
+const irFps = ref(0)
 
 // 订阅句柄
 let cameraInfoListener = null
@@ -193,6 +194,14 @@ const viewModes = computed(() => [
   { key: 'depth', label: t('camera.depthView') },
   { key: 'ir', label: t('camera.irView') },
 ])
+
+// 按当前视图模式显示对应流的真实帧率；YOLO 视图本身是本地推理流，无设备帧率，沿用彩色帧率近似
+const fpsDisplay = computed(() => {
+  const v = viewMode.value === 'depth' ? depthFps.value
+    : viewMode.value === 'ir' ? irFps.value
+    : colorFps.value
+  return v ? v.toFixed(1) : '--'
+})
 
 // 切换视图：displayUrl 随视图变化，切换时重置连接状态以便加载新流
 const setView = (key) => {
@@ -309,14 +318,21 @@ const subscribeToTopics = () => {
     if (msg.width && msg.height) {
       resolution.value = `${msg.width} x ${msg.height}`
     }
-    updateFps()
   })
 
   // 相机设备状态（帧率/延迟/在线/连接类型）
   deviceStatusListener = subscribeTopic('/camera/device_status', 'orbbec_camera_msgs/DeviceStatus', (msg) => {
     devOnline.value = !!msg.device_online
+    // 分别记录彩色/深度/红外上报的真实帧率（三路不同）
     if (msg.color_frame_rate_cur !== undefined) {
       devFrameRate.value = msg.color_frame_rate_cur.toFixed(1) + ' FPS'
+      colorFps.value = msg.color_frame_rate_cur
+    }
+    if (msg.depth_frame_rate_cur !== undefined) {
+      depthFps.value = msg.depth_frame_rate_cur
+    }
+    if (msg.ir_frame_rate_cur !== undefined) {
+      irFps.value = msg.ir_frame_rate_cur
     }
     if (msg.color_delay_ms_cur !== undefined) {
       devDelay.value = msg.color_delay_ms_cur.toFixed(0) + ' ms'
@@ -334,19 +350,6 @@ const subscribeToTopics = () => {
       if (v.key === 'RGB Temperature') devTempRgb.value = v.value + '°C'
     })
   })
-}
-
-// ===== 实时帧率计算 =====
-let lastInfoTime = null
-const updateFps = () => {
-  const now = Date.now()
-  if (lastInfoTime !== null) {
-    const diff = now - lastInfoTime
-    // 计算瞬时帧率并做轻微平滑，避免抖动
-    const inst = 1000 / diff
-    fps.value = fps.value === 0 ? inst : fps.value * 0.7 + inst * 0.3
-  }
-  lastInfoTime = now
 }
 </script>
 

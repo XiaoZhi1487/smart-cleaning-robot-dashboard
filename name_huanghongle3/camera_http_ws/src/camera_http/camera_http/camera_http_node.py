@@ -32,6 +32,10 @@ class MJPEGHandler(BaseHTTPRequestHandler):
     ir_frame = None
     frame_lock = threading.Lock()
 
+    # 活跃 HTTP 客户端计数: 无客户端时回调跳过帧处理, 空闲时大幅降低 CPU
+    client_count = 0
+    client_lock = threading.Lock()
+
     _STREAMS = {'/camera': 'color', '/depth': 'depth', '/ir': 'ir'}
 
     def do_GET(self):
@@ -52,22 +56,33 @@ class MJPEGHandler(BaseHTTPRequestHandler):
 
         self.server.node.get_logger().info(f'Client connected to {self.path}')
 
+        # 记录活跃客户端, 回调据此判断是否值得处理帧
+        with MJPEGHandler.client_lock:
+            MJPEGHandler.client_count += 1
+
+        # 用 try/finally 保证退出时计数必然递减: 浏览器切视图/静默断开会抛
+        # ConnectionAbortedError/OSError 等, 若不递减会让线程与计数僵尸堆积,
+        # 多次切换后连接耗尽导致"切不出来"
         try:
-            while True:
-                with MJPEGHandler.frame_lock:
-                    frame = getattr(MJPEGHandler, f'{mode}_frame')
-                if frame is not None:
-                    ret, jpeg = cv2.imencode('.jpg', frame)
-                    if ret:
-                        self.wfile.write(b'--jpgboundary\r\n')
-                        self.send_header('Content-type', 'image/jpeg')
-                        self.send_header('Content-length', len(jpeg))
-                        self.end_headers()
-                        self.wfile.write(jpeg.tobytes())
-                        self.wfile.write(b'\r\n')
-                time.sleep(0.1)
-        except (BrokenPipeError, ConnectionResetError):
-            self.server.node.get_logger().info(f'Client disconnected: {self.path}')
+            try:
+                while True:
+                    with MJPEGHandler.frame_lock:
+                        frame = getattr(MJPEGHandler, f'{mode}_frame')
+                    if frame is not None:
+                        ret, jpeg = cv2.imencode('.jpg', frame)
+                        if ret:
+                            self.wfile.write(b'--jpgboundary\r\n')
+                            self.send_header('Content-type', 'image/jpeg')
+                            self.send_header('Content-length', len(jpeg))
+                            self.end_headers()
+                            self.wfile.write(jpeg.tobytes())
+                            self.wfile.write(b'\r\n')
+                    time.sleep(0.1)
+            except Exception:  # 断连/写入失败等一律视为客户端离开
+                self.server.node.get_logger().info(f'Client disconnected: {self.path}')
+        finally:
+            with MJPEGHandler.client_lock:
+                MJPEGHandler.client_count -= 1
 
     def log_message(self, format, *args):
         pass  # 抑制默认 HTTP 日志
@@ -127,6 +142,7 @@ class CameraHTTPServer(Node):
 
         self.bridge = CvBridge()
         self.frame_count = 0
+        self._frame_cnt = 0
         self.last_frame_time = None
         self.current_topic = self.primary_topic
         self.subscription = None
@@ -174,9 +190,15 @@ class CameraHTTPServer(Node):
                 self.fallback_timer.cancel()
 
     def image_callback(self, msg):
-        # 彩色流
+        # 彩色流: 有客户端时每帧处理; 空闲时降频(每5帧处理一次)以保持帧缓存不空,
+        # 避免新客户端切换过来时因帧缓存为空而要等完整一帧周期(cold start 卡顿/延迟)
         try:
             cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+            with MJPEGHandler.client_lock:
+                has_client = MJPEGHandler.client_count > 0
+            self._frame_cnt += 1
+            if not has_client and self._frame_cnt % 5 != 0:
+                return
             resized = cv2.resize(cv_image, (self.resize_width, self.resize_height))
             with MJPEGHandler.frame_lock:
                 MJPEGHandler.color_frame = resized
@@ -188,6 +210,11 @@ class CameraHTTPServer(Node):
     def depth_callback(self, msg):
         try:
             cvimg = self.bridge.imgmsg_to_cv2(msg)
+            with MJPEGHandler.client_lock:
+                has_client = MJPEGHandler.client_count > 0
+            self._frame_cnt += 1
+            if not has_client and self._frame_cnt % 5 != 0:
+                return
             gray = _norm_to_8bit(cvimg, self.depth_max)
             with MJPEGHandler.frame_lock:
                 MJPEGHandler.depth_frame = gray
@@ -197,6 +224,11 @@ class CameraHTTPServer(Node):
     def ir_callback(self, msg):
         try:
             cvimg = self.bridge.imgmsg_to_cv2(msg)
+            with MJPEGHandler.client_lock:
+                has_client = MJPEGHandler.client_count > 0
+            self._frame_cnt += 1
+            if not has_client and self._frame_cnt % 5 != 0:
+                return
             gray = _norm_to_8bit(cvimg, self.ir_max)
             with MJPEGHandler.frame_lock:
                 MJPEGHandler.ir_frame = gray
