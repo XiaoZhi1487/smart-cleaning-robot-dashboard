@@ -1,5 +1,5 @@
 # ===== 设备端代码（不推送，本地运行/上传部署） =====
-name_huanghongle2/
+# name_huanghongle2/
 
 # ===== 依赖 / 构建产物 =====
 node_modules/

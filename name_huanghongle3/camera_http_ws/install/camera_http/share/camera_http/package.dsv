@@ -1,0 +1,12 @@
+source;share/camera_http/hook/path.ps1
+source;share/camera_http/hook/path.dsv
+source;share/camera_http/hook/path.sh
+source;share/camera_http/hook/pythonpath.ps1
+source;share/camera_http/hook/pythonpath.dsv
+source;share/camera_http/hook/pythonpath.sh
+source;share/camera_http/hook/pythonscriptspath.ps1
+source;share/camera_http/hook/pythonscriptspath.dsv
+source;share/camera_http/hook/pythonscriptspath.sh
+source;share/camera_http/hook/ament_prefix_path.ps1
+source;share/camera_http/hook/ament_prefix_path.dsv
+source;share/camera_http/hook/ament_prefix_path.sh
