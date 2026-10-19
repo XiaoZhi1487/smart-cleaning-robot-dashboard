@@ -4,10 +4,73 @@
       <component :is="Component" />
     </transition>
   </router-view>
+
+  <!-- 全屏启动加载层：跟随懒加载路由初始化，完成后平滑淡出 -->
+  <RobotLoading
+    :visible="isLoading"
+    :status="loadingStatus"
+    :progress="loadingProgress"
+  />
 </template>
 
 <script setup>
-// 应用入口组件
+import { ref, onMounted } from 'vue'
+import router from './router'
+import RobotLoading from './components/RobotLoading.vue'
+
+const starting = Date.now()
+const isLoading = ref(true)
+const loadingStatus = ref('正在初始化监控系统...')
+const loadingProgress = ref(null)
+
+// 阶段式视觉进度（非真实下载百分比，仅作阶段提示）
+const stages = [
+  { min: 0, label: '正在加载系统资源...' },
+  { min: 25, label: '正在初始化监控组件...' },
+  { min: 50, label: '正在加载设备状态...' }
+]
+
+function animateProgress() {
+  // 视觉进度：0 -> 90（不伪装到 100，留待真正 finished 再补满淡出）
+  if (loadingProgress.value == null) loadingProgress.value = 0
+  const timer = setInterval(() => {
+    if (loadingProgress.value >= 90) { clearInterval(timer); return }
+    loadingProgress.value += 4 + Math.random() * 4
+    if (loadingProgress.value > 90) loadingProgress.value = 90
+    const s = stages.filter(x => x.min <= loadingProgress.value).slice(-1)[0]
+    if (s) loadingStatus.value = s.label
+  }, 160)
+  return timer
+}
+
+onMounted(async () => {
+  // 移除 index.html 里的静态启动层，交棒给 Vue 内的加载层
+  const el = document.getElementById('app-loader')
+  if (el && el.parentNode) el.parentNode.removeChild(el)
+
+  const timer = animateProgress()
+
+  try {
+    loadingStatus.value = '正在初始化监控组件...'
+    // 等待懒加载路由及首屏组件就绪（真正的初始化完成信号）
+    await router.isReady()
+
+    // 保证加载层至少展示 1.2s，避免开发环境编译完成后瞬间闪没、丢失科技感
+    const elapsed = Date.now() - starting
+    if (elapsed < 1200) {
+      await new Promise(r => setTimeout(r, 1200 - elapsed))
+    }
+  } catch (error) {
+    // 初始化异常不阻塞进入监控页，允许继续并提示
+    console.warn('初始化完成（有非关键错误）:', error)
+    loadingStatus.value = '部分模块初始化完成，正在进入监控页面...'
+  } finally {
+    clearInterval(timer)
+    loadingProgress.value = 100
+    // 等进度条渲染到 100% 后再淡出
+    setTimeout(() => { isLoading.value = false }, 200)
+  }
+})
 </script>
 
 <style>

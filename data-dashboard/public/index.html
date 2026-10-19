@@ -11,7 +11,35 @@
     <noscript>
       <strong>We're sorry but <%= htmlWebpackPlugin.options.title %> doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
     </noscript>
-    <div id="app"></div>
+    <div id="app">
+      <!-- 挂载前 HTML 启动层：Vue 尚未初始化时先显示，初始化完成后由 App.vue 移除，减少白屏 -->
+      <div id="app-loader">
+        <svg viewBox="0 0 64 64" fill="none" width="64" height="64">
+          <path d="M32 8V16M27 8H37" stroke="#00E5FF" stroke-width="2.5" stroke-linecap="round"/>
+          <rect x="13" y="17" width="38" height="35" rx="8" stroke="#00E5FF" stroke-width="2.5"/>
+          <circle cx="25" cy="32" r="2.5" fill="#00E5FF"/>
+          <circle cx="39" cy="32" r="2.5" fill="#00E5FF"/>
+          <path d="M26 45H38" stroke="#00E5FF" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <p>高空玻璃幕墙清洁机器人</p>
+        <span>MONITORING SYSTEM INITIALIZING</span>
+        <style>
+          #app-loader {
+            position: fixed; inset: 0; z-index: 99999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 14px; color: #e6f7ff; font-family: 'Microsoft YaHei', sans-serif;
+            background: radial-gradient(1200px 600px at 80% -10%, rgba(22,93,255,.18), transparent 60%),
+                        radial-gradient(900px 500px at 0% 110%, rgba(0,229,255,.12), transparent 60%), #0a101f;
+          }
+          #app-loader svg { animation: loader-breathe 2s ease-in-out infinite; filter: drop-shadow(0 0 12px rgba(0,229,255,.4)); }
+          #app-loader p { margin: 0; font-size: 21px; font-weight: 600; letter-spacing: 2px; color: #39E1F4; }
+          #app-loader span { font-size: 10px; letter-spacing: 2.5px; color: #607d9c; animation: loader-blink 1.2s ease-in-out infinite; }
+          @keyframes loader-breathe { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+          @keyframes loader-blink { 50%{opacity:.4} }
+          @media (prefers-reduced-motion: reduce) { #app-loader svg, #app-loader span { animation: none; } }
+        </style>
+      </div>
+    </div>
     <!-- built files will be auto injected -->
   </body>
 </html>
