@@ -62,7 +62,7 @@
 
 <script setup>
 /* eslint-disable no-empty */   // 多个守卫性空 catch(忽略连接/解码异常不计日志)
-import { reactive, ref, onMounted, onBeforeUnmount } from 'vue'
+import { reactive, ref, nextTick, onMounted, onBeforeUnmount, onActivated } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Terminal } from '@xterm/xterm'
 import '@xterm/xterm/css/xterm.css'
@@ -113,6 +113,8 @@ function writeText(text) {
 }
 
 // —— 右侧快捷命令栏:分组展示,点击即在终端执行 ——
+// 实时资源占用:优先 htop,未安装则退回 top(两者均为实时 CPU/内存/进程监控)
+const SYS_MONITOR = 'command -v htop >/dev/null 2>&1 && htop || top'
 const quickGroups = [
   { title: '服务', cmds: [
     { label: '机器人服务管理器', cmd: 'python /home/nvidia/name_huanghongle3/robot_service_manager.py' }
@@ -125,8 +127,8 @@ const quickGroups = [
     { label: '定位数据', cmd: 'timeout 3 ros2 topic echo /ultrasonic_position' }
   ]},
   { title: '系统 / 硬件', cmds: [
+    { label: '实时资源占用 htop/top', cmd: SYS_MONITOR },
     { label: 'GPU 状态 nvidia-smi', cmd: 'nvidia-smi' },
-    { label: '实时监控 top', cmd: 'top' },
     { label: '内存 free -h', cmd: 'free -h' },
     { label: '磁盘 df -h', cmd: 'df -h' }
   ]}
@@ -257,6 +259,14 @@ onMounted(() => {
   disposed = false
   initTerm()
   window.addEventListener('resize', onWindowResize)
+})
+
+// keep-alive 重新激活:DOM 重新插入,重测终端尺寸并刷新,避免切回时空白/错位
+onActivated(async () => {
+  if (!term) return
+  await nextTick()
+  try { fitAddon.fit() } catch (e) {}
+  try { term.refresh(0, term.rows - 1) } catch (e) {}
 })
 
 onBeforeUnmount(() => {

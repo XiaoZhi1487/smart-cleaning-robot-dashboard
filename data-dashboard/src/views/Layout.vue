@@ -78,7 +78,10 @@
       <main class="layout-main">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
-            <component :is="Component" />
+            <!-- keep-alive 缓存页面实例,切换路由不销毁,保留终端/图表/日志等状态 -->
+            <keep-alive>
+              <component :is="Component" />
+            </keep-alive>
           </transition>
         </router-view>
       </main>

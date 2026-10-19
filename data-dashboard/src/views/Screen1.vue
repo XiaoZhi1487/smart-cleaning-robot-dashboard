@@ -288,8 +288,31 @@ const addLog = (type, typeText, content) => {
 
 // ===== 超声波实时趋势图（真实数据）=====
 const chartLabels = ref([]);
+const chartTimes = ref([]);       // 与点数对应的采样时间戳(毫秒),用于滚动只需最近 1 小时
 const chartData = ref([[], [], []]); // [左, 前, 右]
-const MAX_POINTS = 20;
+const WINDOW_MS = 3600 * 1000;    // 趋势只保留最近 1 小时
+const MAX_POINTS = 2000;          // 安全上限(极端高频时兜底,防止无上限增长)
+
+// Y 轴动态调整:依据当前数据范围自动缩放,让小幅波动也能被看清(对数轴,min>0)
+const trendYAxis = () => {
+  let min = Infinity, max = -Infinity;
+  for (const arr of chartData.value) {
+    for (const v of arr) { if (v != null) { if (v < min) min = v; if (v > max) max = v; } }
+  }
+  const base = {
+    name: 'mm',
+    nameTextStyle: { color: '#8b9bb4' },
+    axisLabel: { color: '#8b9bb4', formatter: (v) => (v >= 1000 ? (v / 1000) + 'k' : v) },
+    axisLine: { lineStyle: { color: 'rgba(0,229,255,0.2)' } },
+    splitLine: { lineStyle: { color: 'rgba(0,229,255,0.1)' } }
+  };
+  // 无数据或所有值相同(直线)时给宽默认范围,有数据则缩放到数据附近并留边距
+  if (!isFinite(min) || min === max) {
+    return { type: 'log', logBase: 10, min: 1, max: 100000, ...base };
+  }
+  const pad = Math.max((max - min) * 0.1, Math.max(min, 1) * 0.05);
+  return { type: 'log', logBase: 10, min: Math.max(0.1, min - pad), max: max + pad, ...base };
+};
 
 const initChart = () => {
   if (!todayChart.value) return;
@@ -299,8 +322,8 @@ const initChart = () => {
     tooltip: { trigger: 'axis', backgroundColor: 'rgba(10,16,31,0.9)', borderColor: 'rgba(0,229,255,0.3)', textStyle: { color: '#e6f7ff' } },
     legend: { data: [t('radar.left'), t('radar.front'), t('radar.right')], textStyle: { color: '#8b9bb4', fontSize: 11 }, top: 5 },
     grid: { left: '5%', right: '5%', bottom: '5%', top: '20%', containLabel: true },
-    xAxis: { type: 'category', data: chartLabels.value, axisLabel: { color: '#8b9bb4', fontSize: 10 }, axisLine: { lineStyle: { color: 'rgba(0,229,255,0.2)' } } },
-    yAxis: { type: 'log', logBase: 10, min: 10, max: 70000, name: 'mm', nameTextStyle: { color: '#8b9bb4' }, axisLabel: { color: '#8b9bb4', formatter: (v) => (v >= 1000 ? (v/1000) + 'k' : v) }, axisLine: { lineStyle: { color: 'rgba(0,229,255,0.2)' } }, splitLine: { lineStyle: { color: 'rgba(0,229,255,0.1)' } } },
+    xAxis: { type: 'category', data: chartLabels.value, axisLabel: { color: '#8b9bb4', fontSize: 10, interval: 'auto' }, axisLine: { lineStyle: { color: 'rgba(0,229,255,0.2)' } } },
+    yAxis: trendYAxis(),
     series: [
       { name: t('radar.left'), type: 'line', data: chartData.value[0], smooth: true, lineStyle: { width: 2 } },
       { name: t('radar.front'), type: 'line', data: chartData.value[1], smooth: true, lineStyle: { width: 2 } },
@@ -313,16 +336,28 @@ const initChart = () => {
 let chartInstance = null;
 const pushChartPoint = () => {
   if (hasData.value) {
-    chartLabels.value.push(new Date().toTimeString().slice(0, 8));
+    const now = Date.now();
+    chartTimes.value.push(now);
+    chartLabels.value.push(new Date(now).toTimeString().slice(0, 8));
     // 对数轴不接受 0/负值，0 替换为 null（断点）
     for (let i = 0; i < 3; i++) chartData.value[i].push(sensors.value[i] > 0 ? sensors.value[i] : null);
-    if (chartLabels.value.length > MAX_POINTS) {
+    // 滚动窗口：只保留最近 1 小时，早于窗口的点被剔除
+    const cutoff = now - WINDOW_MS;
+    while (chartTimes.value.length && chartTimes.value[0] < cutoff) {
+      chartTimes.value.shift();
       chartLabels.value.shift();
-      chartData.value.forEach(arr => arr.shift());
+      chartData.value.forEach((arr) => arr.shift());
+    }
+    // 安全兜底：极端高频时也限制最大点数
+    if (chartLabels.value.length > MAX_POINTS) {
+      chartTimes.value.shift();
+      chartLabels.value.shift();
+      chartData.value.forEach((arr) => arr.shift());
     }
   }
   if (chartInstance) chartInstance.setOption({
     xAxis: { data: chartLabels.value },
+    yAxis: trendYAxis(),
     series: chartData.value.map(d => ({ data: d }))
   });
 };
