@@ -130,7 +130,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { rosState, subscribeTopic, connectRos } from '@/store/rosState'
 
@@ -147,7 +147,11 @@ const maxRetries = 3
 // YOLO 标注流 = CAM 地址(状态栏指定，如 http://localhost:8083/camera)
 // 彩色原图/深度/红外 = 设备 HTTP 服务(YOLO 后端 /info 返回的原始相机基址，如 http://192.168.0.2:8082)
 const deviceBase = ref('')
+// 流门控: 切换视图时先置 false 清空 <img> src, 触发浏览器关闭旧的 MJPEG 长连接,
+// 避免频繁切换把浏览器并发连接槽(MJPEG 永不结束)占满导致新流连不上、延迟堆积
+const streamActive = ref(true)
 const displayUrl = computed(() => {
+  if (!streamActive.value) return ''
   const mode = viewMode.value
   if (mode === 'yolo') return cameraUrl.value
   const base = deviceBase.value
@@ -203,12 +207,17 @@ const fpsDisplay = computed(() => {
   return v ? v.toFixed(1) : '--'
 })
 
-// 切换视图：displayUrl 随视图变化，切换时重置连接状态以便加载新流
+// 切换视图：先清空 <img> src 触发旧 MJPEG 连接关闭, 下一 tick 再建立新视图的连接
 const setView = (key) => {
-  viewMode.value = key
+  if (key === viewMode.value && cameraConnected.value) return
+  streamActive.value = false          // 清空 src -> 浏览器关闭旧长连接, 释放连接槽
   cameraConnected.value = false
   cameraError.value = ''
   cameraRetryCount.value = 0
+  nextTick(() => {
+    viewMode.value = key              // 切换视图 -> 生成新 URL -> 建立新连接
+    streamActive.value = true
+  })
 }
 
 // ===== 视觉识别统计（轮询 YOLO 后端 /detections）=====

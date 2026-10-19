@@ -15,6 +15,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 import cv2
+import socket
 import threading
 import socketserver
 from http.server import BaseHTTPRequestHandler
@@ -31,6 +32,12 @@ class MJPEGHandler(BaseHTTPRequestHandler):
     depth_frame = None
     ir_frame = None
     frame_lock = threading.Lock()
+
+    # 各流帧版本号: 回调每写入一次新帧就 +1, do_GET 据此判断是否有新帧,
+    # 只有新帧才编码+推送, 避免旧帧在 TCP 缓冲区堆积导致延迟线性增大
+    color_version = 0
+    depth_version = 0
+    ir_version = 0
 
     # 活跃 HTTP 客户端计数: 无客户端时回调跳过帧处理, 空闲时大幅降低 CPU
     client_count = 0
@@ -56,6 +63,18 @@ class MJPEGHandler(BaseHTTPRequestHandler):
 
         self.server.node.get_logger().info(f'Client connected to {self.path}')
 
+        # 禁用 Nagle 算法, 避免小包在 TCP 缓冲累积增加延迟
+        try:
+            self.request.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        except Exception:  # noqa: BLE001
+            pass
+        # 写超时: 客户端断开但未发 FIN/销毁时, 让僵尸线程在指定秒后因写超时退出,
+        # 快速释放连接与线程, 否则浏览器频繁切换后死连接长期占用连接槽/线程
+        try:
+            self.request.settimeout(10)
+        except Exception:  # noqa: BLE001
+            pass
+
         # 记录活跃客户端, 回调据此判断是否值得处理帧
         with MJPEGHandler.client_lock:
             MJPEGHandler.client_count += 1
@@ -63,12 +82,17 @@ class MJPEGHandler(BaseHTTPRequestHandler):
         # 用 try/finally 保证退出时计数必然递减: 浏览器切视图/静默断开会抛
         # ConnectionAbortedError/OSError 等, 若不递减会让线程与计数僵尸堆积,
         # 多次切换后连接耗尽导致"切不出来"
+        last_ver = -1
         try:
             try:
                 while True:
                     with MJPEGHandler.frame_lock:
+                        ver = getattr(MJPEGHandler, f'{mode}_version')
                         frame = getattr(MJPEGHandler, f'{mode}_frame')
-                    if frame is not None:
+                    # 仅当出现新帧(版本号变化)时才编码+推送, 丢弃陈旧帧,
+                    # 避免 0.1s 轮询在慢流(如 IR 10fps)下把旧帧塞满 TCP 缓冲造成延迟线性增长
+                    if frame is not None and ver != last_ver:
+                        last_ver = ver
                         ret, jpeg = cv2.imencode('.jpg', frame)
                         if ret:
                             self.wfile.write(b'--jpgboundary\r\n')
@@ -77,7 +101,7 @@ class MJPEGHandler(BaseHTTPRequestHandler):
                             self.end_headers()
                             self.wfile.write(jpeg.tobytes())
                             self.wfile.write(b'\r\n')
-                    time.sleep(0.1)
+                    time.sleep(0.03)
             except Exception:  # 断连/写入失败等一律视为客户端离开
                 self.server.node.get_logger().info(f'Client disconnected: {self.path}')
         finally:
@@ -202,6 +226,7 @@ class CameraHTTPServer(Node):
             resized = cv2.resize(cv_image, (self.resize_width, self.resize_height))
             with MJPEGHandler.frame_lock:
                 MJPEGHandler.color_frame = resized
+                MJPEGHandler.color_version += 1
             self.frame_count += 1
             self.last_frame_time = self.get_clock().now()
         except Exception as e:  # noqa: BLE001
@@ -218,6 +243,7 @@ class CameraHTTPServer(Node):
             gray = _norm_to_8bit(cvimg, self.depth_max)
             with MJPEGHandler.frame_lock:
                 MJPEGHandler.depth_frame = gray
+                MJPEGHandler.depth_version += 1
         except Exception as e:  # noqa: BLE001
             self.get_logger().error(f'depth_callback: {e}')
 
@@ -232,6 +258,7 @@ class CameraHTTPServer(Node):
             gray = _norm_to_8bit(cvimg, self.ir_max)
             with MJPEGHandler.frame_lock:
                 MJPEGHandler.ir_frame = gray
+                MJPEGHandler.ir_version += 1
         except Exception as e:  # noqa: BLE001
             self.get_logger().error(f'ir_callback: {e}')
 
