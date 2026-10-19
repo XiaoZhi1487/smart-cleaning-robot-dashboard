@@ -134,7 +134,7 @@ export default {
     loadFail: 'Industrial camera stream failed',
     connFail: 'Connection failed: {error}',
     liveStatus: 'Camera Live Status',
-    liveFps: 'Image frame rate (real)',
+    liveFps: 'Image frame rate',
     noFrame: 'No image data',
     depthFilter: 'Depth Filter',
     deviceStatus: 'Device Status',

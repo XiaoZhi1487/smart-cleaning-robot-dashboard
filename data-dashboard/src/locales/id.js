@@ -125,7 +125,7 @@ export default {
     loadFail: 'Aliran video kamera industri gagal',
     connFail: 'Koneksi gagal: {error}',
     liveStatus: 'Status Kamera Real-time',
-    liveFps: 'Kecepatan bingkai gambar (asli)',
+    liveFps: 'Kecepatan bingkai gambar',
     noFrame: 'Belum ada data gambar',
     depthFilter: 'Filter Kedalaman',
     deviceStatus: 'Status Perangkat',

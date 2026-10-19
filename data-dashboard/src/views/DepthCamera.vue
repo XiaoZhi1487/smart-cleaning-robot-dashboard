@@ -204,7 +204,7 @@ const fpsDisplay = computed(() => {
   const v = viewMode.value === 'depth' ? depthFps.value
     : viewMode.value === 'ir' ? irFps.value
     : colorFps.value
-  return v ? v.toFixed(1) : '--'
+  return v ? v.toFixed(1) + ' fps' : '--'
 })
 
 // 切换视图：先清空 <img> src 触发旧 MJPEG 连接关闭, 下一 tick 再建立新视图的连接

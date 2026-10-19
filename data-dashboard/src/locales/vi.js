@@ -125,7 +125,7 @@ export default {
     loadFail: 'Kết nối luồng video camera công nghiệp thất bại',
     connFail: 'Kết nối thất bại: {error}',
     liveStatus: 'Trạng Thái Camera Thời Gian Thực',
-    liveFps: 'Tốc độ khung hình (thực)',
+    liveFps: 'Tốc độ khung hình',
     noFrame: 'Chưa có dữ liệu hình ảnh',
     depthFilter: 'Lọc độ sâu',
     deviceStatus: 'Trạng thái thiết bị',

@@ -134,7 +134,7 @@ export default {
     loadFail: '工业相机视频流连接失败',
     connFail: '连接失败: {error}',
     liveStatus: '相机实时运行状态',
-    liveFps: '图像帧率（真实值）',
+    liveFps: '图像帧率',
     noFrame: '暂无图像数据',
     depthFilter: '深度滤波',
     deviceStatus: '设备状态',
