@@ -130,7 +130,8 @@ const quickGroups = [
     { label: '实时资源占用 htop/top', cmd: SYS_MONITOR },
     { label: 'GPU 状态 nvidia-smi', cmd: 'nvidia-smi' },
     { label: '内存 free -h', cmd: 'free -h' },
-    { label: '磁盘 df -h', cmd: 'df -h' }
+    { label: '磁盘 df -h', cmd: 'df -h' },
+    { label: '关机 shutdown', cmd: 'sudo shutdown -h now' }
   ]}
 ]
 
