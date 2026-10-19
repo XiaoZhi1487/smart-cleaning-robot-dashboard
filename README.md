@@ -65,15 +65,21 @@ YOLO 标注后端依赖 **系统 Python 3.9 + GPU 版 PyTorch**。项目**不使
 - **超声波传感器**：前/左/右超声波距离实时趋势图（对数 y 轴，覆盖 100mm–70 000mm 大跨度）、带旋转扫描动效的雷达图。
 - **工业相机**：彩色原图 / YOLO 识别 / 深度图 / 红外图一键切换，视频流参数与设备信息展示、YOLO 检测统计。
 
-## 安装运行
+## 安装
 
 前置：设备端已启动相机 HTTP 服务（8082）与 ROS 话题；本机已装系统 Python 3.9 + GPU 版 PyTorch。
 
 ```bash
 cd data-dashboard
 npm install
+```
+
+## 运行
+
+```bash
 npm run serve    # 一键同时启动前端(8080) + YOLO 后端(8083)，Ctrl+C 一起关
 ```
+
 
 前端访问 `http://localhost:8080`，YOLO 标注流 `http://localhost:8083/camera`。
 
@@ -94,13 +100,7 @@ npm run serve    # 一键同时启动前端(8080) + YOLO 后端(8083)，Ctrl+C �
 - `/stm32_status`、`/stm32_result`：STM32 控制状态与执行结果
 - `/client_count`：在线终端数
 
-## 构建部署
 
-```bash
-cd data-dashboard
-npm run build   # 输出到 dist/
-```
-
-## 作者
+## 作者、技术支持、贡献者
 
 胡钰迈 (hu-yumai) · 黄鸿乐 (huangongle) · 蒙虹伶 (mon-ling)
