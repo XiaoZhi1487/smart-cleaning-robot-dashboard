@@ -8,8 +8,18 @@ export default {
     dashboard: 'Dasbor Data',
     ultrasonic: 'Sensor Ultrasonik',
     camera: 'Kamera Industri',
+    console: 'Konsol',
     expand: 'Perluas Bilah Sisi',
     collapse: 'Ciutkan Bilah Sisi'
+  },
+  console: {
+    host: 'Host', port: 'Port', username: 'Nama pengguna', password: 'Kata sandi',
+    connect: 'Hubungkan', connecting: 'Menghubungkan...', disconnect: 'Putuskan',
+    connected: 'Terhubung', disconnected: 'Terputus', connectFail: 'Koneksi gagal',
+    closed: 'Koneksi ditutup', errorLabel: 'Kesalahan',
+    wsFail: 'Tidak dapat menjangkau SSH bridge (8084), pastikan backend berjalan',
+    hint: 'Terminal SSH interaktif web · jalankan perintah ros2 / bash / pemeliharaan',
+    quickReady: 'Terhubung · klik untuk menjalankan', quickWait: 'Menunggu koneksi...'
   },
   sys: {
     info: 'Informasi Sistem',

@@ -202,7 +202,8 @@ const rosStatus = computed(() => {
 const titleKeyMap = {
   Dashboard: 'nav.dashboard',
   UltrasonicRadar: 'nav.ultrasonic',
-  DepthCamera: 'nav.camera'
+  DepthCamera: 'nav.camera',
+  Console: 'nav.console'
 }
 
 // 获取所有路由（移除权限过滤）

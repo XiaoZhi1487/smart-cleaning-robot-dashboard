@@ -8,8 +8,27 @@ export default {
     dashboard: 'Dashboard',
     ultrasonic: 'Ultrasonic Sensor',
     camera: 'Industrial Camera',
+    console: 'Console',
     expand: 'Expand Sidebar',
     collapse: 'Collapse Sidebar'
+  },
+  console: {
+    host: 'Host',
+    port: 'Port',
+    username: 'Username',
+    password: 'Password',
+    connect: 'Connect',
+    connecting: 'Connecting...',
+    disconnect: 'Disconnect',
+    connected: 'Connected',
+    disconnected: 'Disconnected',
+    connectFail: 'Connection failed',
+    closed: 'Connection closed',
+    errorLabel: 'Error',
+    wsFail: 'Cannot reach SSH bridge (8084). Please ensure the backend is running.',
+    hint: 'Web interactive SSH terminal · run ros2 / bash / ops commands',
+    quickReady: 'Connected · run now',
+    quickWait: 'Waiting for connection...'
   },
   sys: {
     info: 'System Info',

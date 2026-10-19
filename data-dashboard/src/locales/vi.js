@@ -8,8 +8,18 @@ export default {
     dashboard: 'Bảng Điều Khiển Dữ Liệu',
     ultrasonic: 'Cảm Biến Siêu Âm',
     camera: 'Camera Công Nghiệp',
+    console: 'Bảng Điều Khiển',
     expand: 'Mở Rộng Thanh Bên',
     collapse: 'Thu Gọn Thanh Bên'
+  },
+  console: {
+    host: 'Máy chủ', port: 'Cổng', username: 'Tên người dùng', password: 'Mật khẩu',
+    connect: 'Kết nối', connecting: 'Đang kết nối...', disconnect: 'Ngắt kết nối',
+    connected: 'Đã kết nối', disconnected: 'Đã ngắt kết nối', connectFail: 'Kết nối thất bại',
+    closed: 'Đã đóng kết nối', errorLabel: 'Lỗi',
+    wsFail: 'Không kết nối được SSH bridge (8084), vui lòng kiểm tra backend đã chạy',
+    hint: 'Terminal SSH tương tác trên web · chạy ros2 / bash / lệnh bảo trì',
+    quickReady: 'Đã kết nối · bấm để chạy', quickWait: 'Đang chờ kết nối...'
   },
   sys: {
     info: 'Thông Tin Hệ Thống',

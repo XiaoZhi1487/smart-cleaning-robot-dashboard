@@ -8,8 +8,27 @@ export default {
     dashboard: '数据大屏',
     ultrasonic: '超声波传感器',
     camera: '工业相机',
+    console: '控制台',
     expand: '展开侧边栏',
     collapse: '收起侧边栏'
+  },
+  console: {
+    host: '主机',
+    port: '端口',
+    username: '用户名',
+    password: '密码',
+    connect: '连接',
+    connecting: '连接中...',
+    disconnect: '断开',
+    connected: '已连接',
+    disconnected: '已断开',
+    connectFail: '连接失败',
+    closed: '连接已关闭',
+    errorLabel: '错误',
+    wsFail: '无法连接 SSH 桥服务(8084),请确认后端已启动',
+    hint: 'Web 交互式 SSH 终端 · 可执行 ros2 / bash / 运维命令',
+    quickReady: '已连接 · 可点击执行',
+    quickWait: '等待连接...'
   },
   sys: {
     info: '系统信息',

@@ -8,8 +8,18 @@ export default {
     dashboard: 'หน้าจอข้อมูล',
     ultrasonic: 'เซ็นเซอร์อัลตราโซนิก',
     camera: 'กล้องอุตสาหกรรม',
+    console: 'คอนโซล',
     expand: 'ขยายแถบด้านข้าง',
     collapse: 'ย่อแถบด้านข้าง'
+  },
+  console: {
+    host: 'โฮสต์', port: 'พอร์ต', username: 'ชื่อผู้ใช้', password: 'รหัสผ่าน',
+    connect: 'เชื่อมต่อ', connecting: 'กำลังเชื่อมต่อ...', disconnect: 'ตัดการเชื่อมต่อ',
+    connected: 'เชื่อมต่อแล้ว', disconnected: 'ตัดการเชื่อมต่อแล้ว', connectFail: 'การเชื่อมต่อล้มเหลว',
+    closed: 'ปิดการเชื่อมต่อ', errorLabel: 'ข้อผิดพลาด',
+    wsFail: 'ไม่สามารถเชื่อมต่อ SSH bridge (8084) โปรดตรวจสอบว่า backend ทำงานอยู่',
+    hint: 'เทอร์มินัล SSH แบบโต้ตอบบนเว็บ · รัน ros2 / bash / คำสั่งบำรุงรักษา',
+    quickReady: 'เชื่อมต่อแล้ว · คลิกเพื่อรันได้', quickWait: 'กำลังรอการเชื่อมต่อ...'
   },
   sys: {
     info: 'ข้อมูลระบบ',
