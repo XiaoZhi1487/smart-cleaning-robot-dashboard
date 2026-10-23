@@ -1,6 +1,7 @@
 export default {
   app: {
     title: '高空玻璃幕墙清洗机器人-监控管理平台',
+    titleMobile: '幕墙清洁机器人监控大屏',
     subtitle: '数据可视化监控系统',
     running: '运行中'
   },

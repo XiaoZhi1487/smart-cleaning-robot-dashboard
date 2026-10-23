@@ -1,6 +1,6 @@
 <template>
   <div class="screen1-container">
-    <div class="screen-title">{{ $t('screen.pageTitle') }}</div>
+    <div class="screen-title">{{ screenPageTitle }}</div>
     
     <!-- 主内容区 - 使用 flex 布局 -->
     <div class="content-area">
@@ -229,6 +229,17 @@ defineOptions({ name: 'DataScreen' }) // eslint-disable-line no-undef
 echarts.use([LineChart, GridComponent, TooltipComponent, LegendComponent, CanvasRenderer]);
 
 const { t } = useI18n();
+
+// 移动端(<769px)标题简化为"大屏"主名，去掉"xx机器人 - "前缀
+const isMobile = ref(typeof window !== 'undefined' && window.innerWidth <= 768);
+const mobileMq = typeof window !== 'undefined' ? window.matchMedia('(max-width: 768px)') : null;
+const onMobileMq = (e) => { isMobile.value = e.matches; };
+mobileMq?.addEventListener('change', onMobileMq);
+onUnmounted(() => mobileMq?.removeEventListener('change', onMobileMq));
+const screenPageTitle = computed(() => {
+  const full = String(t('screen.pageTitle'));
+  return isMobile.value ? full.split(' - ').pop() : full;
+});
 const todayChart = ref(null);
 const realtimeLogList = ref(null);
 
@@ -874,6 +885,25 @@ onUnmounted(() => {
   
   .log-container {
     flex-direction: column;
+  }
+
+  /* 设备状态总览手机端改为 2 列 */
+  .state-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  .state-item-row {
+    gap: 4px;
+    padding: 6px 8px;
+  }
+
+  .state-name {
+    font-size: 0.6875rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 

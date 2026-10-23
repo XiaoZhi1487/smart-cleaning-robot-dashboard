@@ -1210,8 +1210,9 @@ const getSensorStatusText = (sensor) => {
     flex: none;
   }
 
+  /* 窄屏/手机端超声波数据监控仍保持 3 列排版 */
   .sensor-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 

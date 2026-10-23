@@ -1,6 +1,7 @@
 export default {
   app: {
     title: 'Robot Pembersih Dinding Kaca Tirai Aras Tinggi - Platform Pemantauan & Pengurusan',
+    titleMobile: 'Pemantau Robot Pembersih Dinding',
     subtitle: 'Sistem Pemantauan Visualisasi Data',
     running: 'Berjalan'
   },

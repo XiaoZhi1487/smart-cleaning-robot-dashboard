@@ -1,6 +1,7 @@
 export default {
   app: {
     title: 'High-altitude Glass Curtain Wall Cleaning Robot - Monitoring & Management Platform',
+    titleMobile: 'Curtain Wall Cleaning Robot Monitor',
     subtitle: 'Data Visualization Monitoring System',
     running: 'Running'
   },

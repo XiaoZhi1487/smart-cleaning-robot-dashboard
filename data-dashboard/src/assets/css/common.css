@@ -259,3 +259,14 @@ tr:hover {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
 }
+
+/* ============================================================
+   手机端适配（≤768px）：隐藏各页面顶部大标题，节省纵向空间
+   ============================================================ */
+@media (max-width: 768px) {
+    .screen-title,
+    .page-header,
+    .page-title {
+        display: none;
+    }
+}

@@ -55,9 +55,11 @@ onMounted(async () => {
     // 等待懒加载路由及首屏组件就绪（真正的初始化完成信号）
     await router.isReady()
 
-    // 保证加载层至少展示 1.2s，避免开发环境编译完成后瞬间闪没、丢失科技感
+    // 首次加载保留最小展示时长，手动刷新时加载完成即直接显示，不等待
+    const nav = performance.getEntriesByType('navigation')[0]
+    const isRefresh = nav && nav.type === 'reload'
     const elapsed = Date.now() - starting
-    if (elapsed < 1200) {
+    if (!isRefresh && elapsed < 1200) {
       await new Promise(r => setTimeout(r, 1200 - elapsed))
     }
   } catch (error) {

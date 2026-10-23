@@ -12,8 +12,7 @@
           <svg v-if="!sidebarCollapsed" class="icon-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           <svg v-else class="icon-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></svg>
         </button>
-        <img src="@/assets/logo.png" alt="Logo" class="header-logo" v-if="false">
-        <h1 class="header-title">{{ $t('app.title') }}</h1>
+        <h1 class="header-title">{{ headerTitle }}</h1>
       </div>
       
       <div class="header-right">
@@ -47,7 +46,7 @@
             :key="route.path"
             :to="route.path"
             class="nav-item"
-            :class="{ active: $route.path === route.path }"
+            :class="{ active: $route.name === route.name }"
           >
             <span class="nav-icon" v-html="route.meta.icon"></span>
             <span class="nav-text">{{ $t(route.titleKey) }}</span>
@@ -124,7 +123,7 @@ export default {
 </script>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { rosState, connectRos, disconnectRos, updateRosState, updateCameraUrl } from '@/store/rosState'
@@ -161,11 +160,19 @@ const applyCamera = () => {
   updateCameraUrl(cameraIp.value.trim())
 }
 
-// 侧边栏折叠状态
+// 侧边栏折叠状态（桌面端手动折叠；手机端按钮隐藏）
 const sidebarCollapsed = ref(false)
 const toggleSidebar = () => {
   sidebarCollapsed.value = !sidebarCollapsed.value
 }
+
+// 移动端适配:底部导航模式 + 顶部标题切换
+const isMobile = ref(typeof window !== 'undefined' && window.innerWidth <= 768)
+const mobileMq = typeof window !== 'undefined' ? window.matchMedia('(max-width: 768px)') : null
+const onMobileMq = (e) => { isMobile.value = e.matches }
+mobileMq?.addEventListener('change', onMobileMq)
+onUnmounted(() => mobileMq?.removeEventListener('change', onMobileMq))
+const headerTitle = computed(() => (isMobile.value ? t('app.titleMobile') : t('app.title')))
 
 // 支持的语言列表（用于切换按钮）
 const languages = [
@@ -625,29 +632,83 @@ onMounted(() => {
 
 /* 响应式 */
 @media (max-width: 768px) {
-  .layout-sidebar {
-    width: 60px;
+  /* 顶部:隐藏折叠按钮与状态徽标,h1 保持显示(文案由 headerTitle 切换) */
+  .sidebar-toggle,
+  .status-badge {
+    display: none;
   }
-  
-  .nav-text,
+
+  /* 左侧边栏改为底部导航栏 */
+  .layout-sidebar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    width: 100%;
+    height: 56px;
+    flex-direction: row;
+    border-right: none;
+    border-top: 1px solid rgba(0, 229, 255, 0.2);
+    z-index: 20;
+  }
+
+  .sidebar-nav {
+    flex: none;
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    padding: 0;
+    overflow-x: auto;
+  }
+
+  .nav-item {
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    padding: 6px 4px;
+    margin: 0;
+    border-radius: 0;
+    text-align: center;
+  }
+
+  .nav-item.active {
+    border-left: none;
+    border-top: 2px solid #00E5FF;
+    margin-left: 0;
+    background: linear-gradient(180deg, rgba(0,229,255,0.32), rgba(0,229,255,0.10));
+    color: #00E5FF;
+    box-shadow: inset 0 0 0 1px rgba(0,229,255,0.4);
+  }
+
+  .nav-item.active .nav-icon {
+    filter: drop-shadow(0 0 6px rgba(0,229,255,0.9));
+  }
+
+  .nav-item.active .nav-text {
+    color: #00E5FF;
+    font-weight: 700;
+  }
+
+  .nav-text {
+    font-size: 0.625rem;
+    color: inherit;
+  }
+
+  /* 底部导航不展示系统信息 */
   .sidebar-footer {
     display: none;
   }
-  
-  .nav-item {
-    justify-content: center;
-    padding: 12px;
+
+  /* 主内容区为底部导航留出空间,并允许纵向滚动 */
+  .layout-main {
+    padding-bottom: 56px;
+    overflow: auto;
   }
 
+  /* 手机端隐藏整个底部连接状态栏 */
   .layout-footer {
-    padding: 0 12px;
-  }
-
-  .footer-left {
-    gap: 12px;
-  }
-
-  .footer-right {
     display: none;
   }
 }

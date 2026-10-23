@@ -1,6 +1,7 @@
 export default {
   app: {
     title: 'Robot vệ sinh tường kính cao tầng - Nền tảng giám sát & quản lý',
+    titleMobile: 'Bảng Giám Sát Robot Làm Sạch',
     subtitle: 'Hệ Thống Giám Sát Trực Quan Dữ Liệu',
     running: 'Đang chạy'
   },
