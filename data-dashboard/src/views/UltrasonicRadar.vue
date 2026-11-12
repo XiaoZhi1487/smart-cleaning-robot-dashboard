@@ -70,15 +70,15 @@
 
             <div class="control-grid">
               <div></div>
-              <button class="btn-control btn-dir" @mousedown="sendStm32Cmd('forward')" @mouseup="sendStm32Cmd('stop')" @mouseleave="sendStm32Cmd('stop')"><svg class="icon-svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19 0-14"/><path d="m6 11 6-6 6 6"/></svg><span>{{ $t('radar.forward') }}</span></button>
+              <button class="btn-control btn-dir" @mousedown="handleDirDown('forward')" @mouseup="handleDirUp()" @mouseleave="handleDirLeave()"><svg class="icon-svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19 0-14"/><path d="m6 11 6-6 6 6"/></svg><span>{{ $t('radar.forward') }}</span></button>
               <div></div>
               
-              <button class="btn-control btn-dir" @mousedown="sendStm32Cmd('turn_left')" @mouseup="sendStm32Cmd('stop')" @mouseleave="sendStm32Cmd('stop')"><svg class="icon-svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 5 12"/><path d="m11 18-6-6 6-6"/></svg><span>{{ $t('radar.turnLeft') }}</span></button>
+              <button class="btn-control btn-dir" @mousedown="handleDirDown('turn_left')" @mouseup="handleDirUp()" @mouseleave="handleDirLeave()"><svg class="icon-svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 5 12"/><path d="m11 18-6-6 6-6"/></svg><span>{{ $t('radar.turnLeft') }}</span></button>
               <button class="btn-control btn-stop" @click="sendStm32Cmd('stop')"><svg class="icon-svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg><span>{{ $t('radar.stop') }}</span></button>
-              <button class="btn-control btn-dir" @mousedown="sendStm32Cmd('turn_right')" @mouseup="sendStm32Cmd('stop')" @mouseleave="sendStm32Cmd('stop')"><svg class="icon-svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12 19 12"/><path d="m13 6 6 6-6 6"/></svg><span>{{ $t('radar.turnRight') }}</span></button>
+              <button class="btn-control btn-dir" @mousedown="handleDirDown('turn_right')" @mouseup="handleDirUp()" @mouseleave="handleDirLeave()"><svg class="icon-svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12 19 12"/><path d="m13 6 6 6-6 6"/></svg><span>{{ $t('radar.turnRight') }}</span></button>
               
               <div></div>
-              <button class="btn-control btn-dir" @mousedown="sendStm32Cmd('backward')" @mouseup="sendStm32Cmd('stop')" @mouseleave="sendStm32Cmd('stop')"><svg class="icon-svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 5 0 14"/><path d="m18 13-6 6-6-6"/></svg><span>{{ $t('radar.backward') }}</span></button>
+              <button class="btn-control btn-dir" @mousedown="handleDirDown('backward')" @mouseup="handleDirUp()" @mouseleave="handleDirLeave()"><svg class="icon-svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 5 0 14"/><path d="m18 13-6 6-6-6"/></svg><span>{{ $t('radar.backward') }}</span></button>
               <div></div>
             </div>
 
@@ -246,10 +246,25 @@ const sendStm32Cmd = (command) => {
   }
   
   publishTopic('/stm32_cmd', 'std_msgs/Int32', { data: cmdValue })
-  const cmdName = t(CMD_LABEL_KEYS[command] || 'radar.stop')
-  addStm32Log(t('radar.sendLog', { cmd: cmdName, value: cmdValue }))
+  // 指令发送不再单独记日志，统一以 STM32 返回的 success / error 结果为准，避免重复
   currentCommandKey.value = command
 }
+
+// 方向键按下状态：只有真正按下按钮，松开/移出时才发送停止，避免鼠标滑过按钮误发指令并刷日志
+const pressedDir = ref(null)
+
+const handleDirDown = (command) => {
+  pressedDir.value = command
+  sendStm32Cmd(command)
+}
+
+// 松开或移出：仅在按住状态下发送停止，且只发一次
+const handleDirUp = () => {
+  if (!pressedDir.value) return
+  pressedDir.value = null
+  sendStm32Cmd('stop')
+}
+const handleDirLeave = handleDirUp
 
 // 急停按钮
 const emergencyStop = () => {
@@ -1507,6 +1522,14 @@ const getSensorStatusText = (sensor) => {
 
 .log-title {
   letter-spacing: 1px;
+}
+
+/* 日志行隔行底色：淡色 / 深色交替，便于区分每一条 */
+.log-item:nth-child(odd) {
+  background: rgba(0, 0, 0, 0.18);
+}
+.log-item:nth-child(even) {
+  background: rgba(0, 229, 255, 0.05);
 }
 
 .log-item:hover {
